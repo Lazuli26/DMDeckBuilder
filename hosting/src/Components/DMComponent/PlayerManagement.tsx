@@ -4,8 +4,8 @@ import { Button, Card, CardContent, CardHeader, Dialog, DialogActions, DialogCon
 import { useEffect, useState } from "react";
 import { ExpandMore, Delete, Add, Remove, Shuffle, Visibility } from '@mui/icons-material';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
-import PlayCard, { rarityColors } from "../PlayCard/PlayCard";
-import { rarities } from "./DMComponent";
+import { rarities } from "@/services/constants";
+import PlayCard from "../PlayCard/PlayCard";
 
 const basePlayer: Player = {
     id: "",
@@ -122,7 +122,7 @@ const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
                                             return nameA.localeCompare(nameB);
                                         })
                                         .map(([key, card]) => (
-                                            <ListItem key={key} style={{ backgroundColor: rarityColors[(cards.find(c => c.id === card.cardId)?.rarity || 1) - 1] }}>
+                                            <ListItem key={key} style={{ backgroundColor: rarities[(cards.find(c => c.id === card.cardId)?.rarity || 1)].background }}>
 
                                                 <ListItemText
                                                     primary={getCardName(card.cardId)}
@@ -225,7 +225,7 @@ const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
                                 >
                                     <MenuItem value="">All</MenuItem>
                                     {Object.entries(rarities).map(([i, v]) => (
-                                        <MenuItem key={i} value={i}>{v}</MenuItem>
+                                        <MenuItem key={i} value={i}>{v.name}</MenuItem>
                                     ))}
                                 </Select>
                             </FormControl>

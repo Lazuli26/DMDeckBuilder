@@ -4,9 +4,8 @@ import { useState } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Tabs, Tab, Box, List, ListItem, FormControl, InputLabel, Select, MenuItem, Checkbox, IconButton, ListItemText, Typography } from "@mui/material";
 import { Pack, PlayingCard } from "../../services/interfaces";
 import { Edit, Clear } from "@mui/icons-material";
-import { rarityColors } from "../PlayCard/PlayCard";
-import { rarities } from "./DMComponent";
 import PlayCard from "../PlayCard/PlayCard";
+import { rarities } from "@/services/constants";
 
 interface EditPackDialogProps {
     campaignID: string;
@@ -151,13 +150,13 @@ const EditPackDialog: React.FC<EditPackDialogProps> = ({
                                 >
                                     <MenuItem value="">All</MenuItem>
                                     {Object.entries(rarities).map(([i, v]) => (
-                                        <MenuItem key={i} value={i}>{v}</MenuItem>
+                                        <MenuItem key={i} value={i}>{v.name}</MenuItem>
                                     ))}
                                 </Select>
                             </FormControl>
                         </ListItem>
                         {sortedCards.map(card => (
-                            <ListItem key={card.id} style={{ backgroundColor: rarityColors[card.rarity - 1], minWidth: "30rem" }}>
+                            <ListItem key={card.id} style={{ backgroundColor: rarities[card.rarity].background, minWidth: "30rem" }}>
                                 <Checkbox
                                     checked={pack?.cardPool.some(content => content.cardId === card.id) || false}
                                     onChange={() => onToggleCardInPack(card.id)}

@@ -34,3 +34,10 @@ export interface Campaign {
     packs: Pack[];
     cardShowcase?: string[]; // If not empty, a dialog will open with the cards in this array for all players and the DM
 }
+
+export interface Rarity {
+    name: string;
+    color: string;
+    background: string;
+};
+

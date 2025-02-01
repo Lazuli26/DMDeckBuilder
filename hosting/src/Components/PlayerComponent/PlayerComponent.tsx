@@ -3,10 +3,10 @@ import { subscribeToPlayers, subscribeToCards, subscribeToPacks } from "@/servic
 import { Player, PlayingCard, Pack } from "@/services/interfaces";
 import { Card, CardContent, CardHeader, Dialog, List, ListItem, ListItemText, Tabs, Tab, Box, FormControl, InputLabel, Select, MenuItem, TextField, Accordion, AccordionSummary, AccordionDetails, Button, Typography, Grid2 } from "@mui/material";
 import { ExpandMore } from '@mui/icons-material';
-import PlayCard, { rarityColors } from "../PlayCard/PlayCard";
+import PlayCard from "../PlayCard/PlayCard";
 import CardShowCase from "../CardShowCase/CardShowCase";
 import "./style.css";
-import { rarities } from "../DMComponent/DMComponent";
+import { rarities } from "@/services/constants";
 
 const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ CampaignID, PlayerID }) => {
     const [players, setPlayers] = useState<Player[]>([]);
@@ -15,7 +15,7 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
     const [viewCard, setViewCard] = useState<{ cardId: string, timesUsed: number } | null>(null);
     const [viewPack, setViewPack] = useState<Pack | null>(null); // Add this state
     const [tabIndex, setTabIndex] = useState(0);
-    const [rarityFilter, setRarityFilter] = useState<number | null>(null);
+    const [rarityFilter, setRarityFilter] = useState<string>("");
     const [categoryFilter, setCategoryFilter] = useState<string>("");
     const [nameFilter, setNameFilter] = useState<string>("");
     const [sortOption, setSortOption] = useState<string>("name");
@@ -60,7 +60,7 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
 
     const getFilteredCards = () => {
         return cards.filter(card =>
-            (rarityFilter === null || card.rarity === rarityFilter) &&
+            (rarityFilter === "" || rarities[card.rarity].name === rarityFilter) &&
             (categoryFilter === "" || card.category === categoryFilter) &&
             (nameFilter === "" || card.name.toLowerCase().includes(nameFilter.toLowerCase()))
         ).sort((a, b) => {
@@ -76,7 +76,7 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
     const uniqueCategories = ["All", ...new Set(cards.map(card => card.category).filter(category => category !== ""))];
 
     const clearFilters = () => {
-        setRarityFilter(null);
+        setRarityFilter("");
         setCategoryFilter("");
         setNameFilter("");
         setSortOption("name");
@@ -99,7 +99,7 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
                             {viewPack.cardPool.map(({ cardId }) => {
                                 const card = cards.find(c => c.id === cardId);
                                 return card ? (
-                                    <ListItem key={card.id} style={{ marginBottom: 3, backgroundColor: rarityColors[card.rarity - 1] }}>
+                                    <ListItem key={card.id} style={{ marginBottom: 3, backgroundColor: rarities[card.rarity].background }}>
                                         <ListItemText
                                             primary={card.name}
                                             secondary={card.description}
@@ -140,7 +140,7 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
                             Balance: {currentPlayer?.balance}
                             <List>
                                 {currentPlayer && Object.entries(currentPlayer.Cards).map(([key, card]) => (
-                                    <ListItem key={key} style={{ marginBottom: 3, backgroundColor: rarityColors[(cards.find(c => c.id === card.cardId)?.rarity || 1) - 1] }}>
+                                    <ListItem key={key} style={{ marginBottom: 3, backgroundColor: rarities[(cards.find(c => c.id === card.cardId)?.rarity || 1)].background }}>
                                         <ListItemText
                                             primary={getCardName(card.cardId)}
                                             secondary={<>
@@ -180,7 +180,7 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
                                                     ></ListItemText>
                                                 </ListItem>
                                                 {Object.entries(p.Cards).map(([key, card]) => (
-                                                    <ListItem key={key} style={{ marginBottom: 3, backgroundColor: rarityColors[(cards.find(c => c.id === card.cardId)?.rarity || 1) - 1] }}>
+                                                    <ListItem key={key} style={{ marginBottom: 3, backgroundColor: rarities[(cards.find(c => c.id === card.cardId)?.rarity || 1)].background }}>
                                                         <ListItemText
                                                             primary={getCardName(card.cardId)}
                                                             secondary={<>
@@ -222,13 +222,13 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
                                         <InputLabel id="rarity-filter-label">Rarity</InputLabel>
                                         <Select
                                             labelId="rarity-filter-label"
-                                            value={rarityFilter || ""}
+                                            value={rarityFilter}
                                             label="Rarity"
-                                            onChange={(e) => setRarityFilter(e.target.value === "" ? null : parseInt(e.target.value as string))}
+                                            onChange={(e) => setRarityFilter(e.target.value)}
                                         >
                                             <MenuItem value="">All</MenuItem>
-                                            {Object.entries(rarities).map(([i, v]) => (
-                                                <MenuItem key={i} value={i}>{v}</MenuItem>
+                                            {Object.values(rarities).map((rarity, index) => (
+                                                <MenuItem key={index} value={rarity.name}>{rarity.name}</MenuItem>
                                             ))}
                                         </Select>
                                     </FormControl>
@@ -271,7 +271,7 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
                             </Accordion>
                             <List>
                                 {getFilteredCards().map((card) => (
-                                    <ListItem key={card.id} style={{ marginBottom: 3, backgroundColor: rarityColors[card.rarity - 1] }}>
+                                    <ListItem key={card.id} style={{ marginBottom: 3, backgroundColor: rarities[card.rarity].background }}>
                                         <ListItemText
                                             primary={card.name}
                                             secondary={card.description}

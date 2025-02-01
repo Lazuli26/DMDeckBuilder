@@ -3,21 +3,7 @@ import { PlayingCard } from "@/services/interfaces";
 import { Card, CardHeader, Typography, CardContent, CardMedia, Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import "./style.css";
-import { rarities } from "../DMComponent/DMComponent";
-
-export const rarityColors = [
-    'rgba(226, 40, 40, 0.75)',
-    'rgba(104, 93, 252, 0.75)',
-    'rgba(166, 219, 154, 0.75)',
-    'rgba(225, 228, 203, 0.75)'
-]
-
-const rarityBackgrounds = [
-    'https://i.imgur.com/nUWzBNa.jpeg',
-    'https://i.imgur.com/Be1ru4O.jpeg',
-    'https://i.imgur.com/44MShCg.jpeg',
-    'https://i.imgur.com/UjcJonU.jpeg'
-]
+import { rarities } from "@/services/constants";
 
 const highlightStyle = {
     fontWeight: 'bold'
@@ -63,7 +49,7 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 position: 'relative',
-                backgroundImage: `url(${rarityBackgrounds[(CardInfo?.rarity || 1) - 1]})`,
+                backgroundImage: `url(${rarities[(CardInfo?.rarity || 1)].background})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 padding: "8% 8%",
@@ -77,7 +63,7 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
                     width: "100%",
                     position: 'relative',
                     zIndex: 2,
-                    backgroundColor: rarityColors[(CardInfo?.rarity || 1) - 1],
+                    backgroundColor: rarities[(CardInfo?.rarity || 1)].color,
                     marginBottom: '10px',
                     border: '5px solid black',
                     padding: '2%'
@@ -88,7 +74,7 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
                             {CardInfo?.name}
                         </Typography>
                         <Typography variant="body2" color="textSecondary" style={responsiveTextStyle}>
-                            {rarities[(CardInfo?.rarity || 1) as keyof typeof rarities]}
+                            {rarities[(CardInfo?.rarity || 1)].name}
                         </Typography>
                     </Box>
                 }
@@ -113,7 +99,7 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
                 width: "100%",
                 position: 'relative',
                 zIndex: 2,
-                backgroundColor: rarityColors[(CardInfo?.rarity || 1) - 1],
+                backgroundColor: rarities[(CardInfo?.rarity || 1)].color,
                 border: '5px solid black',
                 margin: '10px 0px',
                 padding: '2%',
@@ -130,7 +116,7 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
                 width: "100%",
                 position: 'relative',
                 zIndex: 2,
-                backgroundColor: rarityColors[(CardInfo?.rarity || 1) - 1],
+                backgroundColor: rarities[(CardInfo?.rarity || 1)].color,
                 border: '5px solid black',
                 padding: '2%'
             }}>

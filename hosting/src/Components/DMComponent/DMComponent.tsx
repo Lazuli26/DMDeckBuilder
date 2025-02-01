@@ -8,12 +8,6 @@ import PlayerManagement from "./PlayerManagement";
 import PackManager from "./PackManager";
 import CardShowCase from "../CardShowCase/CardShowCase";
 
-export const rarities = {
-    1: "Epic",
-    2: "Rare",
-    3: "Uncommon",
-    4: "Common"
-};
 
 export const DMComponent: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
     const [viewCard, setViewCard] = useState("");

@@ -2,9 +2,9 @@
 
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, List, ListItem, ListItemText, FormControl, InputLabel, Select, MenuItem, Box, Typography, IconButton } from "@mui/material";
 import { Pack, PlayingCard, Player } from "../../services/interfaces";
-import { rarityColors } from "../PlayCard/PlayCard";
 import { PersonAdd } from "@mui/icons-material";
 import { useState } from "react";
+import { rarities } from "@/services/constants";
 
 interface OpenPackDialogProps {
     open: boolean;
@@ -34,7 +34,7 @@ const OpenPackDialog: React.FC<OpenPackDialogProps> = ({
                 <Typography>Please select {pack?.pack.picksPerPack}</Typography>
                 <List>
                     {pack?.pickedCards.map((card, i) => (
-                        <ListItem key={card.id + i} style={{ backgroundColor: rarityColors[card.rarity - 1], minWidth: "30rem" }}>
+                        <ListItem key={card.id + i} style={{ backgroundColor: rarities[card.rarity].background, minWidth: "30rem" }}>
                             <ListItemText primary={card.name} />
                             <IconButton onClick={() => setSelectedCard(card.id)}>
                                 <PersonAdd />
