@@ -1,0 +1,36 @@
+.Card {
+    aspect-ratio: 5 / 7;
+    background: #f5f5f5;
+    /* display: flex; */
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    word-wrap: break-word;
+  }
+  
+  /* Portrait Mode: Use 75vw */
+  @media (orientation: portrait) {
+    .Card {
+      width: 75vw;
+      height: auto;
+    }
+  }
+  
+  /* Landscape Mode: Use 75vh */
+  @media (orientation: landscape) {
+    .Card {
+      height: 75vh;
+      width: auto;
+    }
+  }
+
+  @keyframes rotateLoop {
+    0% { transform: rotateZ(-0.5deg); }
+    50% { transform: rotateZ(0.5deg); }
+    100% { transform: rotateZ(-0.5deg); }
+  }
+
+  .animated-card {
+    background-color: red; /* Just for visibility */
+    animation: rotateLoop 8s infinite linear;
+  }
