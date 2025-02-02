@@ -1,9 +1,9 @@
-import { subscribeToCard } from "@/services/firestore";
-import { PlayingCard } from "@/services/interfaces";
 import { Card, CardHeader, Typography, CardContent, CardMedia, Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import "./style.css";
 import { rarities } from "@/services/constants";
+import { useAppSelector } from "@/store/reduxHooks";
+import React from "react";
 
 const highlightStyle = {
     fontWeight: 'bold'
@@ -23,15 +23,8 @@ const responsiveTextStyle = {
     fontSize: 'calc(0.5rem + 0.5vw)' // Responsive font size for other texts
 };
 
-const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: number }> = ({ CampaignID, CardID, timesUsed }) => {
-    const [CardInfo, setCardInfo] = useState<PlayingCard | null>(null);
+const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: number }> = ({ CardID, timesUsed }) => {
     const [showCostCategory, setShowCostCategory] = useState(true);
-
-    useEffect(() => {
-        subscribeToCard(CampaignID, CardID, data => {
-            if (data) setCardInfo(data);
-        });
-    }, [CampaignID, CardID]);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -40,6 +33,7 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
 
         return () => clearInterval(interval);
     }, []);
+    const CardInfo = useAppSelector(state => state.campaign.value?.cards.find(card => card.id == CardID)) ||  null;
 
     return (
         <Card
@@ -144,4 +138,4 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
         </Card>
     );
 };
-export default PlayCard;
+export default React.memo(PlayCard);

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { useAppSelector } from "@/store/reduxHooks";
 import { List, ListItem, ListItemText, Box, IconButton, Dialog, FormControl, InputLabel, Select, MenuItem, TextField, Checkbox, Button } from "@mui/material";
 import { Visibility, Edit, Delete, Close, Remove, Add } from "@mui/icons-material";
-import { modifyPlayerCards, setCardShowcase, subscribeToCards, addCardUsage } from "@/services/firestore";
+import { modifyPlayerCards, setCardShowcase, addCardUsage } from "@/services/firestore";
 import { PlayingCard, Pack, Player } from "@/services/interfaces";
 import PlayCard from "../PlayCard/PlayCard";
 import CardEditor from "../DMComponent/CardEditor";
@@ -49,7 +50,7 @@ const getFilteredCardListItems = (
             const itemB = cardListData.find(item => item.cardId === cardB.id);
 
             if (!!itemA == !!itemB) {
-                if (sortOption === "rarity"){
+                if (sortOption === "rarity") {
                     if (cardA!.rarity !== cardB!.rarity) {
                         return cardA!.rarity - cardB!.rarity;
                     } else return cardA!.name.localeCompare(cardB!.name);
@@ -72,7 +73,7 @@ const getCardUsageText = (card: PlayingCard, timesUsed: number) => {
 };
 
 const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = false, packEditControls, enableSorting = false, enableFiltering = false }) => {
-    const [cardCatalog, setCardCatalog] = useState<PlayingCard[]>([]);
+    const cardCatalog = useAppSelector(state => state.campaign.value?.cards || []).map(card => ({ ...basePlayingCard, ...card }));
     const [cardListData, setCardListData] = useState<CardListItem[]>([]);
     const [viewCard, setViewCard] = useState<string | null>(null);
     const [cardEditorId, setCardEditorId] = useState<string | null>(null);
@@ -83,33 +84,26 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
     const [searchFilter, setSearchFilter] = useState<string>("");
 
     useEffect(() => {
-        return subscribeToCards(campaignID, data => setCardCatalog(data.map(val => ({ ...basePlayingCard, ...val }))));
-    }, [campaignID]);
-
-    useEffect(() => {
-        const fetchCards = async () => {
-            const cardListData: CardListItem[] = [];
-            if (Array.isArray(dataSource)) {
-                for (const cardId of dataSource) {
-                    cardListData.push({ cardId });
-                }
-            } else if ('cardPool' in dataSource) {
-                for (const { cardId, weight } of dataSource.cardPool) {
-
-                    const packCardData: CardListItem = { cardId, packInfo: { weight } };
-                    cardListData.push(packCardData);
-                }
-            } else if ('Cards' in dataSource) {
-                for (const [inventoryKey, { cardId, timesUsed }] of Object.entries(dataSource.Cards)) {
-                    const playerCardData: CardListItem = { cardId, playerInfo: { inventoryKey, timesUsed } };
-                    cardListData.push(playerCardData);
-                }
+        const cardListData: CardListItem[] = [];
+        if (Array.isArray(dataSource)) {
+            for (const cardId of dataSource) {
+                cardListData.push({ cardId });
             }
-            setCardListData(cardListData);
-        };
+        } else if ('cardPool' in dataSource) {
+            for (const { cardId, weight } of dataSource.cardPool) {
 
-        fetchCards();
+                const packCardData: CardListItem = { cardId, packInfo: { weight } };
+                cardListData.push(packCardData);
+            }
+        } else if ('Cards' in dataSource) {
+            for (const [inventoryKey, { cardId, timesUsed }] of Object.entries(dataSource.Cards)) {
+                const playerCardData: CardListItem = { cardId, playerInfo: { inventoryKey, timesUsed } };
+                cardListData.push(playerCardData);
+            }
+        }
+        setCardListData(cardListData);
     }, [campaignID, dataSource]);
+    
 
     const handleShowcaseCard = async (cardId: string) => {
         await setCardShowcase(campaignID, [cardId]);

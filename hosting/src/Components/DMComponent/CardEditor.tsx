@@ -2,8 +2,9 @@ import { Dialog, DialogActions, DialogContent, DialogTitle, TextField, Button, F
 import { PlayingCard } from "@/services/interfaces";
 import { useState, useEffect } from "react";
 import { generateUUID } from "@/services/utils";
-import { getCardInfo, upsertCard } from "@/services/firestore";
+import { upsertCard, removeCard } from "@/services/firestore";
 import { rarities } from "@/services/constants";
+import store from "@/store";
 
 interface CardEditorProps {
     open: boolean;
@@ -15,7 +16,6 @@ interface CardEditorProps {
 
 const CardEditor: React.FC<CardEditorProps> = ({ open, cardId, campaignID, onClose, onSave }) => {
     const [cardEditor, setCardEditor] = useState<PlayingCard | null>(null);
-
     useEffect(() => {
         if (cardId === "") {
             setCardEditor({
@@ -30,9 +30,12 @@ const CardEditor: React.FC<CardEditorProps> = ({ open, cardId, campaignID, onClo
                 activation_cost: ""
             });
         } else {
-            getCardInfo(campaignID, cardId).then(card => {
-                if (card) setCardEditor({ ...card });
-            });
+            for (const card of store.getState().campaign.value?.cards || []) {
+                if (card.id === cardId) {
+                    setCardEditor({ ...card });
+                    return;
+                }
+            }
         }
     }, [cardId, campaignID]);
 
@@ -47,6 +50,13 @@ const CardEditor: React.FC<CardEditorProps> = ({ open, cardId, campaignID, onClo
         if (cardEditor) {
             await upsertCard(campaignID, cardEditor);
             onSave(cardEditor);
+        }
+    };
+
+    const handleRemove = async () => {
+        if (cardEditor) {
+            await removeCard(campaignID, cardEditor.id);
+            onClose();
         }
     };
 
@@ -149,6 +159,9 @@ const CardEditor: React.FC<CardEditorProps> = ({ open, cardId, campaignID, onClo
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose}>Cancel</Button>
+                {cardId !== "" && (
+                    <Button color="error" onClick={handleRemove}>Delete</Button>
+                )}
                 <Button
                     variant="contained"
                     disabled={submitError.description || submitError.name || submitError.type || submitError.uses}

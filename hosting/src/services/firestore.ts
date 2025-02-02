@@ -68,6 +68,18 @@ export async function upsertCard(campaignId: string, card: PlayingCard): Promise
     await updateDoc(campaignRef, { cards });
 }
 
+// Remove a card from a campaign
+export async function removeCard(campaignId: string, cardId: string): Promise<void> {
+    const campaignRef = doc(db, "campaigns", campaignId);
+    const campaignSnap = await getDoc(campaignRef);
+    if (!campaignSnap.exists()) return;
+
+    const cards: Campaign["cards"] = campaignSnap.data().cards || [];
+    const updatedCards = cards.filter(card => card.id !== cardId);
+
+    await updateDoc(campaignRef, { cards: updatedCards });
+}
+
 // Add or edit a pack in a campaign
 export async function upsertPack(campaignId: string, pack: Pack): Promise<void> {
     const campaignRef = doc(db, "campaigns", campaignId);
@@ -260,6 +272,17 @@ export function subscribeToPlayers(campaignId: string, callback: (players: Playe
         callback(campaign.players);
       } else {
         callback([]);
+      }
+    });
+  }
+// Subscribe to campaign
+export function subscribeToCampaign(campaignId: string, callback: (Campaign: Campaign | null) => void): Unsubscribe {
+    return onSnapshot(doc(db, "campaigns", campaignId), (docSnap) => {
+      if (docSnap.exists()) {
+        const campaign = docSnap.data() as Campaign;
+        callback(campaign);
+      } else {
+        callback(null);
       }
     });
   }

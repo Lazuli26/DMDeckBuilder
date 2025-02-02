@@ -1,12 +1,13 @@
-import { subscribeToPlayers, upsertPlayer, modifyPlayerCards, subscribeToCards } from "@/services/firestore";
+import { upsertPlayer, modifyPlayerCards } from "@/services/firestore";
 import { Player, PlayingCard } from "@/services/interfaces";
 import { Button, Card, CardContent, CardHeader, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemText, TextField, Autocomplete, Box, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ExpandMore, Add, Remove, Shuffle } from '@mui/icons-material';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import { rarities } from "@/services/constants";
 import PlayCard from "../PlayCard/PlayCard";
 import CardList from "../CardList/CardList";
+import { useAppSelector } from "@/store/reduxHooks";
 
 const basePlayer: Player = {
     id: "",
@@ -16,30 +17,18 @@ const basePlayer: Player = {
 };
 
 const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
-    const [playerList, setPlayerList] = useState<Player[]>([]);
+    const playerList = useAppSelector(state => state.campaign.value?.players || []);
+    const cards = useAppSelector(state => state.campaign.value?.cards || []);
     const [newPlayer, setNewPlayer] = useState<Player | null>(null);
-    const [cards, setCards] = useState<PlayingCard[]>([]);
     const [selectedCards, setSelectedCards] = useState<PlayingCard[]>([]);
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
     const [viewCard, setViewCard] = useState<{ cardId: string, timesUsed: number } | null>(null);
     const [rarityFilter, setRarityFilter] = useState<number | null>(null);
 
-    useEffect(() => {
-        return subscribeToPlayers(CampaignID, data => {
-            setPlayerList(data);
-        });
-    }, [CampaignID]);
-
-    useEffect(() => {
-        return subscribeToCards(CampaignID, setCards);
-    }, [CampaignID]);
-
     const playerSubmitError = {
         name: newPlayer?.name === "",
         balance: newPlayer?.balance === 0
     };
-
-
 
     const updatePlayerBalance = async (player: Player, amount: number, event: React.MouseEvent) => {
         event.stopPropagation();
@@ -82,7 +71,6 @@ const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
         <Card>
             <CardHeader title="Player Management" />
             <CardContent>
-
                 <List>
                     {playerList.map((val, index) => (
                         <Accordion key={index}>
@@ -91,9 +79,9 @@ const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
                                     primary={val.name}
                                     secondary={
                                         <>
+                                            <Remove onClick={(event) => updatePlayerBalance(val, -1, event)} />
                                             Balance: {val.balance}
                                             <Add onClick={(event) => updatePlayerBalance(val, 1, event)} />
-                                            <Remove onClick={(event) => updatePlayerBalance(val, -1, event)} />
                                         </>
                                     }
                                 />

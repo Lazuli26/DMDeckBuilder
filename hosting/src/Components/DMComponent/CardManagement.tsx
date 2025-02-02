@@ -1,8 +1,9 @@
-import { getCampaign, subscribeToCards } from "@/services/firestore";
 import { PlayingCard } from "@/services/interfaces";
 import { Button, Card, CardContent, CardHeader } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import CardList from "../CardList/CardList";
+import CardEditor from "./CardEditor";
+import { useAppSelector } from "@/store/reduxHooks";
 
 export const basePlayingCard: PlayingCard = {
     id: "",
@@ -17,15 +18,9 @@ export const basePlayingCard: PlayingCard = {
 };
 
 const CardManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
-    const [cards, setCards] = useState<PlayingCard[]>([]);
-    const [campaignName, setCampaignName] = useState("");
-
-    useEffect(() => {
-        getCampaign(CampaignID).then(campaign => {
-            if (campaign) setCampaignName(campaign.name);
-        });
-        return subscribeToCards(CampaignID, data => setCards(data.map(val => ({ ...basePlayingCard, ...val }))));
-    }, [CampaignID]);
+    const cards= useAppSelector(state => state.campaign.value?.cards || []).map(val => ({ ...basePlayingCard, ...val }));
+    const campaignName = useAppSelector(state => state.campaign.value?.name) || "";
+    const [cardEditorId, setCardEditorId] = useState<string | null>(null);
 
     const backupCards = () => {
         const date = new Date();
@@ -46,8 +41,18 @@ const CardManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
             <CardHeader title="Card List" />
             <CardContent sx={{ overflow: "auto" }}>
                 <Button variant="contained" onClick={backupCards}>Backup Cards</Button>
+                <Button variant="contained" onClick={() => setCardEditorId("")} sx={{ marginLeft: 2 }}>Create New Card</Button>
                 <CardList campaignID={CampaignID} enableSorting enableFiltering dataSource={cards.map(card => card.id)} isDM={true} />
             </CardContent>
+            {cardEditorId != null && (
+                <CardEditor
+                    open={cardEditorId != null}
+                    cardId={cardEditorId}
+                    campaignID={CampaignID}
+                    onClose={() => setCardEditorId(null)}
+                    onSave={() => setCardEditorId(null)}
+                />
+            )}
         </Card>
     );
 };

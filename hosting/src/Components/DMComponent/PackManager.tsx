@@ -1,20 +1,20 @@
 "use client"
 
 import { useState, useEffect } from "react";
+import { useAppSelector } from "@/store/reduxHooks";
 import { List, ListItem, ListItemText, Card, CardContent, Typography, IconButton, Button, Dialog } from "@mui/material";
-import { subscribeToPacks, upsertPack, subscribeToCards, subscribeToPlayers, modifyPlayerCards, setCardShowcase } from "../../services/firestore";
-import { Pack, PlayingCard, Player } from "../../services/interfaces";
+import { upsertPack, modifyPlayerCards, setCardShowcase } from "../../services/firestore";
+import { Pack, PlayingCard } from "../../services/interfaces";
 import { Edit, OpenInNew, Visibility } from "@mui/icons-material";
 import PlayCard from "../PlayCard/PlayCard";
-import { basePlayingCard } from "./CardManagement";
 import { generateUUID, generatePackContents } from "../../services/utils";
 import EditPackDialog from "./EditPackDialog";
 import OpenPackDialog from "./OpenPackDialog";
 
 const PackManager: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
-    const [packs, setPacks] = useState<Pack[]>([]);
-    const [cards, setCards] = useState<PlayingCard[]>([]);
-    const [players, setPlayers] = useState<Player[]>([]);
+    const packs = useAppSelector(state => state.campaign.value?.packs || []);
+    const cards = useAppSelector(state => state.campaign.value?.cards || []);
+    const players = useAppSelector(state => state.campaign.value?.players || []);
     const [editPack, setEditPack] = useState<Pack | null>(null);
     const [tabIndex, setTabIndex] = useState(0);
     const [viewCard, setViewCard] = useState<string | null>(null);
@@ -22,22 +22,6 @@ const PackManager: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
     const [categoryFilter, setCategoryFilter] = useState("");
     const [rarityFilter, setRarityFilter] = useState<number | null>(null);
     const [openedPackCards, setOpenedPackCards] = useState<{ pack: Pack, pickedCards: PlayingCard[] } | null>(null);
-
-
-    useEffect(() => {
-        return subscribeToPacks(CampaignID, setPacks)
-    }, [CampaignID]);
-
-    useEffect(() => {
-        return subscribeToPlayers(CampaignID, setPlayers)
-    }, [CampaignID]);
-
-    useEffect(() => {
-        return subscribeToCards(CampaignID, data => {
-            const validCards = data.map(val => ({ ...basePlayingCard, ...val }));
-            setCards(validCards);
-        })
-    }, [CampaignID]);
 
     useEffect(() => {
         setEditPack(editPackState => {

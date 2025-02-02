@@ -1,41 +1,22 @@
-import { useEffect, useState } from "react";
-import { subscribeToPlayers, subscribeToCards, subscribeToPacks } from "@/services/firestore";
-import { Player, PlayingCard, Pack } from "@/services/interfaces";
-import { Card, CardContent, CardHeader, Dialog, List, Tabs, Tab, Accordion, AccordionSummary, AccordionDetails, Typography, Grid2 } from "@mui/material";
+import { Pack } from "@/services/interfaces";
+import { useAppSelector } from "@/store/reduxHooks";
 import { ExpandMore } from '@mui/icons-material';
-import PlayCard from "../PlayCard/PlayCard";
-import CardShowCase from "../CardShowCase/CardShowCase";
-import "./style.css";
+import { Accordion, AccordionDetails, AccordionSummary, Card, CardContent, CardHeader, Dialog, Grid2, List, Tab, Tabs, Typography } from "@mui/material";
+import { useState } from "react";
 import CardList from "../CardList/CardList";
+import CardShowCase from "../CardShowCase/CardShowCase";
+import PlayCard from "../PlayCard/PlayCard";
+import "./style.css";
 
 const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ CampaignID, PlayerID }) => {
-    const [players, setPlayers] = useState<Player[]>([]);
-    const [cards, setCards] = useState<PlayingCard[]>([]);
-    const [packs, setPacks] = useState<Pack[]>([]);
+    const players = useAppSelector(state => state.campaign.value?.players || []);
+    const cards = useAppSelector(state => state.campaign.value?.cards || []);
+    const packs = useAppSelector(state => state.campaign.value?.packs || []);
     const [viewCard, setViewCard] = useState<{ cardId: string, timesUsed: number } | null>(null);
     const [viewPack, setViewPack] = useState<Pack | null>(null); // Add this state
     const [tabIndex, setTabIndex] = useState(0);
 
-    useEffect(() => {
-        return subscribeToPlayers(CampaignID, setPlayers);
-    }, [CampaignID]);
-
-    useEffect(() => {
-        return subscribeToCards(CampaignID, setCards);
-    }, [CampaignID]);
-
-    useEffect(() => {
-        return subscribeToPacks(CampaignID, setPacks);
-    }, [CampaignID]);
-
     const currentPlayer = players.find(p => p.id === PlayerID);
-
-
-
-
-
-
-
 
     return (
         <>
