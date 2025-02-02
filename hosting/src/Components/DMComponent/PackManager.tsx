@@ -23,21 +23,32 @@ const PackManager: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
     const [rarityFilter, setRarityFilter] = useState<number | null>(null);
     const [openedPackCards, setOpenedPackCards] = useState<{ pack: Pack, pickedCards: PlayingCard[] } | null>(null);
 
+
     useEffect(() => {
-        const unsubscribe = [
-            subscribeToPacks(CampaignID, setPacks),
-            subscribeToCards(CampaignID, data => {
-                const validCards = data.map(val => ({ ...basePlayingCard, ...val }));
-                setCards(validCards);
-                if (editPack) {
-                    const filteredCardPool = editPack.cardPool.filter(content => validCards.some(card => card.id === content.cardId));
-                    setEditPack({ ...editPack, cardPool: filteredCardPool });
-                }
-            }),
-            subscribeToPlayers(CampaignID, setPlayers)
-        ];
-        return () => unsubscribe.forEach(unsub => unsub());
-    }, [CampaignID, editPack]);
+        return subscribeToPacks(CampaignID, setPacks)
+    }, [CampaignID]);
+
+    useEffect(() => {
+        return subscribeToPlayers(CampaignID, setPlayers)
+    }, [CampaignID]);
+
+    useEffect(() => {
+        return subscribeToCards(CampaignID, data => {
+            const validCards = data.map(val => ({ ...basePlayingCard, ...val }));
+            setCards(validCards);
+        })
+    }, [CampaignID]);
+
+    useEffect(() => {
+        setEditPack(editPackState => {
+            if (editPackState) {
+                const validCardIds = cards.map(card => card.id);
+                const validContents = editPackState.cardPool.filter(content => validCardIds.includes(content.cardId));
+                return { ...editPackState, cardPool: validContents }
+            }
+            else return editPackState
+        });
+    }, [cards]);
 
     const handlePackChange = (field: keyof Pack, value: string | number) => {
         if (editPack) {
@@ -66,6 +77,7 @@ const PackManager: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
     };
 
     const handleToggleCardInPack = (cardId: string) => {
+        console.log("toggle card", cardId);
         if (editPack) {
             const contents = editPack.cardPool.some(content => content.cardId === cardId)
                 ? editPack.cardPool.filter(content => content.cardId !== cardId)
@@ -75,6 +87,7 @@ const PackManager: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
     };
 
     const handleWeightChange = (cardId: string, weight: number | null) => {
+        console.log("change weight", cardId, weight);
         if (weight !== null) {
             weight = Math.max(1, weight);
         }
@@ -152,7 +165,7 @@ const PackManager: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
                         </ListItem>
                     ))}
                 </List>
-                <EditPackDialog
+                {editPack && <EditPackDialog
                     campaignID={CampaignID}
                     open={!!editPack}
                     pack={editPack}
@@ -171,6 +184,7 @@ const PackManager: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
                     onCategoryFilterChange={setCategoryFilter}
                     onRarityFilterChange={setRarityFilter}
                 />
+                }
                 {viewCard && (
                     <Dialog PaperProps={{ style: { backgroundColor: 'transparent', boxShadow: 'none' } }} open={!!viewCard} onClose={() => setViewCard(null)}>
                         <PlayCard CampaignID={CampaignID} CardID={viewCard} />

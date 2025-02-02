@@ -45,6 +45,7 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
         <Card
             className="Card animated-card"
             style={{
+                border: `10px solid ${rarities[(CardInfo?.rarity || 1)].color}`,
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
@@ -63,9 +64,9 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
                     width: "100%",
                     position: 'relative',
                     zIndex: 2,
-                    backgroundColor: rarities[(CardInfo?.rarity || 1)].color,
+                    backgroundColor: "rgba(255, 255, 255, 0.5)",
                     marginBottom: '10px',
-                    border: '5px solid black',
+                    border: `2px solid black`,
                     padding: '2%'
                 }}
                 title={
@@ -73,7 +74,7 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
                         <Typography variant="h5" color="textPrimary" style={responsiveTitleStyle}>
                             {CardInfo?.name}
                         </Typography>
-                        <Typography variant="body2" color="textSecondary" style={responsiveTextStyle}>
+                        <Typography variant="body2" color="textPrimary" style={responsiveTextStyle}>
                             {rarities[(CardInfo?.rarity || 1)].name}
                         </Typography>
                     </Box>
@@ -88,7 +89,7 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
                     width: "calc(100% - 5%)",
                     objectFit: "cover",
                     justifySelf: "center",
-                    border: '5px solid grey',
+                    border: `5px solid grey`,
                     margin: '0 16px',
                     position: 'relative',
                     zIndex: 2
@@ -99,8 +100,8 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
                 width: "100%",
                 position: 'relative',
                 zIndex: 2,
-                backgroundColor: rarities[(CardInfo?.rarity || 1)].color,
-                border: '5px solid black',
+                backgroundColor: "rgba(255, 255, 255, 0.5)",
+                border: `2px solid black`,
                 margin: '10px 0px',
                 padding: '2%',
                 overflowY: 'auto', // Enable vertical scrollbar
@@ -116,8 +117,8 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
                 width: "100%",
                 position: 'relative',
                 zIndex: 2,
-                backgroundColor: rarities[(CardInfo?.rarity || 1)].color,
-                border: '5px solid black',
+                backgroundColor: "rgba(255, 255, 255, 0.5)",
+                border: '2px solid black',
                 padding: '2%'
             }}>
                 {showCostCategory ? (

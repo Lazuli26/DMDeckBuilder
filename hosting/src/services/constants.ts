@@ -1,4 +1,4 @@
-import { Rarity } from "./interfaces";
+import { PlayingCard, Rarity } from "./interfaces";
 
 export const rarities: {[key: number]: Rarity} = {
     1: {
@@ -21,4 +21,16 @@ export const rarities: {[key: number]: Rarity} = {
         color: 'rgba(225, 228, 203, 0.75)',
         background: 'https://i.imgur.com/UjcJonU.jpeg'
     }
+};
+
+export const basePlayingCard: PlayingCard = {
+    id: "",
+    name: "",
+    rarity: 0,
+    type: "",
+    category: "",
+    activation_cost: "",
+    description: "",
+    usage: 0,
+    background: ""
 };

@@ -1,11 +1,12 @@
-import { subscribeToPlayers, upsertPlayer, modifyPlayerCards, subscribeToCards, addCardUsage, setCardShowcase } from "@/services/firestore";
+import { subscribeToPlayers, upsertPlayer, modifyPlayerCards, subscribeToCards } from "@/services/firestore";
 import { Player, PlayingCard } from "@/services/interfaces";
-import { Button, Card, CardContent, CardHeader, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemText, TextField, Autocomplete, Box, IconButton, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { Button, Card, CardContent, CardHeader, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemText, TextField, Autocomplete, Box, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { useEffect, useState } from "react";
-import { ExpandMore, Delete, Add, Remove, Shuffle, Visibility } from '@mui/icons-material';
+import { ExpandMore, Add, Remove, Shuffle } from '@mui/icons-material';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import { rarities } from "@/services/constants";
 import PlayCard from "../PlayCard/PlayCard";
+import CardList from "../CardList/CardList";
 
 const basePlayer: Player = {
     id: "",
@@ -38,18 +39,7 @@ const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
         balance: newPlayer?.balance === 0
     };
 
-    const getCardName = (cardId: string) => {
-        const card = cards.find(c => c.id === cardId);
-        return card ? card.name : `Card ID: ${cardId}`;
-    };
 
-    const getCardUsage = (card: { cardId: string; timesUsed: number }) => {
-        const cardInfo = cards.find(c => c.id === card.cardId);
-        if (!cardInfo) return `Times Used: ${card.timesUsed}`;
-        return cardInfo.usage === -1
-            ? `Times Used: ${card.timesUsed} / ∞`
-            : `Times Used: ${card.timesUsed} / ${cardInfo.usage}`;
-    };
 
     const updatePlayerBalance = async (player: Player, amount: number, event: React.MouseEvent) => {
         event.stopPropagation();
@@ -87,14 +77,12 @@ const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
     const clearVisibleCards = () => {
         setSelectedCards([]);
     };
-    const handleShowcaseCard = async (cardId: string) => {
-        await setCardShowcase(CampaignID, [cardId]);
-    };
 
     return (
         <Card>
             <CardHeader title="Player Management" />
             <CardContent>
+
                 <List>
                     {playerList.map((val, index) => (
                         <Accordion key={index}>
@@ -111,56 +99,15 @@ const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
                                 />
                             </AccordionSummary>
                             <AccordionDetails>
-                                <List>
-                                    {Object.entries(val.Cards)
-                                        .sort(([keyA, cardA], [keyB, cardB]) => {
-                                            const nameA = getCardName(cardA.cardId);
-                                            const nameB = getCardName(cardB.cardId);
-                                            if (nameA === nameB) {
-                                                return keyA.localeCompare(keyB);
-                                            }
-                                            return nameA.localeCompare(nameB);
-                                        })
-                                        .map(([key, card]) => (
-                                            <ListItem key={key} style={{ backgroundColor: rarities[(cards.find(c => c.id === card.cardId)?.rarity || 1)].background }}>
-
-                                                <ListItemText
-                                                    primary={getCardName(card.cardId)}
-                                                    secondary={<>
-                                                        <Remove onClick={() => addCardUsage(CampaignID, val.id, key, -1)} />
-                                                        {getCardUsage(card)}
-                                                        <Add onClick={() => addCardUsage(CampaignID, val.id, key, 1)} />
-                                                    </>}
-                                                />
-                                                <IconButton onClick={() => handleShowcaseCard(card.cardId)}>
-                                                    <Visibility />
-                                                </IconButton>
-                                                <IconButton onClick={() => modifyPlayerCards(CampaignID, val.id, "remove", key)}>
-                                                    <Delete />
-                                                </IconButton>
-                                                <Box
-                                                    component="img"
-                                                    src={cards.find(c => c.id === card.cardId)?.background}
-                                                    alt={getCardName(card.cardId)}
-                                                    sx={{
-                                                        width: 50,
-                                                        height: 50,
-                                                        objectFit: "cover",
-                                                        marginLeft: 2,
-                                                        borderRadius: 1,
-                                                        cursor: 'pointer'
-                                                    }}
-                                                    onClick={() => setViewCard({ cardId: card.cardId, timesUsed: card.timesUsed })}
-                                                />
-                                            </ListItem>
-                                        ))}
-                                    <ListItem>
-                                        <Button onClick={() => {
-                                            setSelectedPlayer(val);
-                                            setSelectedCards([]);
-                                        }}>Add Card</Button>
-                                    </ListItem>
-                                </List>
+                                <Button onClick={() => {
+                                    setSelectedPlayer(val);
+                                    setSelectedCards([]);
+                                }}>Add Card</Button>
+                                <CardList
+                                    campaignID={CampaignID}
+                                    dataSource={val}
+                                    isDM={true}
+                                />
                             </AccordionDetails>
                         </Accordion>
                     ))}

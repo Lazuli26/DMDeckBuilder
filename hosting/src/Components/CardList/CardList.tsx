@@ -1,22 +1,79 @@
 import { useEffect, useState } from "react";
-import { List, ListItem, ListItemText, Box, IconButton, Dialog, FormControl, InputLabel, Select, MenuItem, TextField } from "@mui/material";
-import { Visibility, Edit } from "@mui/icons-material";
-import { setCardShowcase, getCardInfo } from "@/services/firestore";
+import { List, ListItem, ListItemText, Box, IconButton, Dialog, FormControl, InputLabel, Select, MenuItem, TextField, Checkbox, Button } from "@mui/material";
+import { Visibility, Edit, Delete, Close, Remove, Add } from "@mui/icons-material";
+import { modifyPlayerCards, setCardShowcase, subscribeToCards, addCardUsage } from "@/services/firestore";
 import { PlayingCard, Pack, Player } from "@/services/interfaces";
 import PlayCard from "../PlayCard/PlayCard";
 import CardEditor from "../DMComponent/CardEditor";
-import { rarities } from "@/services/constants";
+import { rarities, basePlayingCard } from "@/services/constants";
 
 interface CardListProps {
     campaignID: string;
     dataSource: string[] | Pack | Player;
+    packEditControls?: { toggleCard: (cardId: string) => void, changeWeight: (cardId: string, weight: number | null) => void };
     isDM?: boolean;
     enableSorting?: boolean;
     enableFiltering?: boolean;
 }
 
-const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = false, enableSorting = false, enableFiltering = false }) => {
-    const [cards, setCards] = useState<PlayingCard[]>([]);
+type CardListItem = {
+    cardId?: string;
+    packInfo?: Omit<Pack["cardPool"][0], "cardId">;
+    playerInfo?: Omit<Player["Cards"][string], "cardId"> & { inventoryKey: string };
+}
+
+const normalizeString = (str: string) => {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+};
+
+const getFilteredCardListItems = (
+    cardCatalog: PlayingCard[],
+    cardListData: CardListItem[],
+    rarityFilter: number | null,
+    categoryFilter: string,
+    typeFilter: string,
+    searchFilter: string,
+    sortOption: string
+) => {
+    return cardCatalog
+        .filter(card => {
+            return card !== undefined &&
+                (rarityFilter === null || card.rarity === rarityFilter) &&
+                (categoryFilter === "" || card.category === categoryFilter) &&
+                (typeFilter === "" || card.type === typeFilter) &&
+                (searchFilter === "" || normalizeString(card.name.toLowerCase()).includes(normalizeString(searchFilter.toLowerCase())) ||
+                    normalizeString(card.description.toLowerCase()).includes(normalizeString(searchFilter.toLowerCase())));
+        })
+        .sort((cardA, cardB) => {
+            const itemA = cardListData.find(item => item.cardId === cardA.id);
+            const itemB = cardListData.find(item => item.cardId === cardB.id);
+
+            if (!!itemA == !!itemB) {
+                if (sortOption === "rarity"){
+                    if (cardA!.rarity !== cardB!.rarity) {
+                        return cardA!.rarity - cardB!.rarity;
+                    } else return cardA!.name.localeCompare(cardB!.name);
+                }
+                else if (sortOption === "name") {
+                    return cardA!.name.localeCompare(cardB!.name);
+                }
+            }
+            else {
+                if (!!itemA !== !!itemB) {
+                    return !!itemA ? -1 : 1;
+                }
+            }
+            return 0;
+        });
+};
+
+const getCardUsageText = (card: PlayingCard, timesUsed: number) => {
+    return card.usage === -1 ? `Times Used: ${timesUsed} / ∞` : `Times Used: ${timesUsed} / ${card.usage}`;
+};
+
+const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = false, packEditControls, enableSorting = false, enableFiltering = false }) => {
+    const [cardCatalog, setCardCatalog] = useState<PlayingCard[]>([]);
+    const [cardListData, setCardListData] = useState<CardListItem[]>([]);
     const [viewCard, setViewCard] = useState<string | null>(null);
     const [cardEditorId, setCardEditorId] = useState<string | null>(null);
     const [sortOption, setSortOption] = useState<string>("name");
@@ -26,20 +83,29 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
     const [searchFilter, setSearchFilter] = useState<string>("");
 
     useEffect(() => {
+        return subscribeToCards(campaignID, data => setCardCatalog(data.map(val => ({ ...basePlayingCard, ...val }))));
+    }, [campaignID]);
+
+    useEffect(() => {
         const fetchCards = async () => {
+            const cardListData: CardListItem[] = [];
             if (Array.isArray(dataSource)) {
-                const cardPromises = dataSource.map(cardId => getCardInfo(campaignID, cardId));
-                const cardResults = await Promise.all(cardPromises);
-                setCards(cardResults.filter(card => card !== null) as PlayingCard[]);
+                for (const cardId of dataSource) {
+                    cardListData.push({ cardId });
+                }
             } else if ('cardPool' in dataSource) {
-                const cardPromises = dataSource.cardPool.map(({ cardId }) => getCardInfo(campaignID, cardId));
-                const cardResults = await Promise.all(cardPromises);
-                setCards(cardResults.filter(card => card !== null) as PlayingCard[]);
+                for (const { cardId, weight } of dataSource.cardPool) {
+
+                    const packCardData: CardListItem = { cardId, packInfo: { weight } };
+                    cardListData.push(packCardData);
+                }
             } else if ('Cards' in dataSource) {
-                const cardPromises = Object.values(dataSource.Cards).map(({ cardId }) => getCardInfo(campaignID, cardId));
-                const cardResults = await Promise.all(cardPromises);
-                setCards(cardResults.filter(card => card !== null) as PlayingCard[]);
+                for (const [inventoryKey, { cardId, timesUsed }] of Object.entries(dataSource.Cards)) {
+                    const playerCardData: CardListItem = { cardId, playerInfo: { inventoryKey, timesUsed } };
+                    cardListData.push(playerCardData);
+                }
             }
+            setCardListData(cardListData);
         };
 
         fetchCards();
@@ -49,29 +115,18 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
         await setCardShowcase(campaignID, [cardId]);
     };
 
-    const normalizeString = (str: string) => {
-        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const handleRemoveCardFromPlayer = async (playerId: string, inventoryKey: string) => {
+        await modifyPlayerCards(campaignID, playerId, "remove", inventoryKey);
     };
 
-    const getFilteredCards = () => {
-        return cards.filter(card =>
-            (rarityFilter === null || card.rarity === rarityFilter) &&
-            (categoryFilter === "" || card.category === categoryFilter) &&
-            (typeFilter === "" || card.type === typeFilter) &&
-            (searchFilter === "" || normalizeString(card.name.toLowerCase()).includes(normalizeString(searchFilter.toLowerCase())) ||
-                normalizeString(card.description.toLowerCase()).includes(normalizeString(searchFilter.toLowerCase())))
-        ).sort((a, b) => {
-            if (sortOption === "name") {
-                return a.name.localeCompare(b.name);
-            } else if (sortOption === "rarity") {
-                return a.rarity - b.rarity;
-            }
-            return 0;
-        });
+    const handleAddCardUsage = async (playerId: string, inventoryKey: string, amount: number) => {
+        await addCardUsage(campaignID, playerId, inventoryKey, amount);
     };
 
-    const uniqueCategories = ["All", ...new Set(cards.map(card => card.category).filter(category => category !== ""))];
-    const uniqueTypes = ["All", ...new Set(cards.map(card => card.type).filter(type => type !== ""))];
+    const uniqueCategories = ["All", ...new Set(cardCatalog.map(card => card.category).filter(category => category !== ""))];
+    const uniqueTypes = ["All", ...new Set(cardCatalog.map(card => card.type).filter(type => type !== ""))];
+
+    const sortedCardItems = getFilteredCardListItems(cardCatalog, cardListData, rarityFilter, categoryFilter, typeFilter, searchFilter, sortOption);
 
     return (
         <>
@@ -143,35 +198,100 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
                 </FormControl>
             )}
             <List>
-                {getFilteredCards().map((card) => (
-                    <ListItem key={card.id} style={{ marginBottom: 3, backgroundColor: rarities[card.rarity].color }}>
-                        <ListItemText
-                            primary={card.name}
-                        />
-                        {isDM && (
-                            <IconButton onClick={() => setCardEditorId(card.id)}>
-                                <Edit />
+                {sortedCardItems.map((card, index) => {
+                    const item: CardListItem | undefined = cardListData.find(item => item.cardId === card!.id);
+                    if (!item && !packEditControls) return null;
+                    return (
+                        <ListItem key={card!.id + index} style={{ marginBottom: 3, background: "whitesmoke", borderWidth: "1vh", borderColor: rarities[card!.rarity].color }}>
+                            <ListItemText
+                                primary={
+                                    packEditControls ? (
+                                        <>
+                                            <Checkbox
+                                                checked={!!item}
+                                                onChange={() => packEditControls.toggleCard(card!.id)}
+                                            />
+                                            {card!.name}
+                                        </>
+                                    ) : (
+                                        card!.name
+                                    )
+                                }
+                                secondary={
+                                    <>
+                                        {item && item.playerInfo && (<>{isDM && (
+                                            <IconButton onClick={() => handleAddCardUsage((dataSource as Player).id, item.playerInfo!.inventoryKey, -1)}>
+                                                <Remove />
+                                            </IconButton>
+                                        )}
+                                            {getCardUsageText(card!, item.playerInfo.timesUsed)}
+                                            {isDM && (
+                                                <IconButton onClick={() => handleAddCardUsage((dataSource as Player).id, item.playerInfo!.inventoryKey, 1)}>
+                                                    <Add />
+                                                </IconButton>
+                                            )}
+                                            <br />
+                                        </>)
+                                        }
+                                        {card!.description}
+                                    </>
+                                }
+                            />
+                            {isDM && (
+                                <>
+                                    <IconButton onClick={() => setCardEditorId(card!.id)}>
+                                        <Edit />
+                                    </IconButton>
+                                    {item && item.playerInfo && 'id' in dataSource && (
+                                        <IconButton onClick={() => handleRemoveCardFromPlayer((dataSource as Player).id, item.playerInfo!.inventoryKey)}>
+                                            <Delete />
+                                        </IconButton>
+                                    )}
+                                </>
+                            )}
+                            {isDM && <IconButton onClick={() => handleShowcaseCard(card!.id)}>
+                                <Visibility />
                             </IconButton>
-                        )}
-                        <IconButton onClick={() => handleShowcaseCard(card.id)}>
-                            <Visibility />
-                        </IconButton>
-                        <Box
-                            component="img"
-                            src={card.background}
-                            alt={card.name}
-                            sx={{
-                                width: 50,
-                                height: 50,
-                                objectFit: "cover",
-                                marginLeft: 2,
-                                borderRadius: 1,
-                                cursor: 'pointer'
-                            }}
-                            onClick={() => setViewCard(card.id)}
-                        />
-                    </ListItem>
-                ))}
+                            }
+                            {packEditControls && (
+                                <Box sx={{ marginLeft: 2 }}>
+                                    {item && item.packInfo?.weight ? (
+                                        <TextField
+                                            label="Weight"
+                                            type="number"
+                                            value={item.packInfo.weight}
+                                            onChange={(e) => packEditControls.changeWeight(card!.id, parseInt(e.target.value))}
+                                            sx={{ width: 120 }}
+                                            slotProps={{
+                                                input: {
+                                                    endAdornment: <IconButton onClick={() => packEditControls.changeWeight(card!.id, null)}><Close /></IconButton>,
+                                                },
+                                            }}
+                                        />
+                                    ) : (
+                                        <Button variant="contained" sx={{ width: 120 }} onClick={() => packEditControls.changeWeight(card!.id, card!.rarity)}>
+                                            Weight: {card!.rarity}
+                                        </Button>
+                                    )}
+                                </Box>
+                            )}
+                            <Box
+                                component="img"
+                                src={card!.background}
+                                alt={card!.name}
+                                sx={{
+                                    width: 50,
+                                    height: 50,
+                                    objectFit: "cover",
+                                    marginLeft: 2,
+                                    borderRadius: 1,
+                                    cursor: 'pointer'
+                                }}
+                                onClick={() => setViewCard(card!.id)}
+                            />
+                        </ListItem>
+                    );
+                })}
             </List>
             {viewCard && (
                 <Dialog open={!!viewCard} onClose={() => setViewCard(null)} PaperProps={{ style: { backgroundColor: 'transparent', boxShadow: 'none' } }}>
