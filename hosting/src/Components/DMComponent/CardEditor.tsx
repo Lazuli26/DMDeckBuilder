@@ -16,6 +16,8 @@ interface CardEditorProps {
 
 const CardEditor: React.FC<CardEditorProps> = ({ open, cardId, campaignID, onClose, onSave }) => {
     const [cardEditor, setCardEditor] = useState<PlayingCard | null>(null);
+    const [confirmDelete, setConfirmDelete] = useState(false);
+
     useEffect(() => {
         if (cardId === "") {
             setCardEditor({
@@ -160,7 +162,19 @@ const CardEditor: React.FC<CardEditorProps> = ({ open, cardId, campaignID, onClo
             <DialogActions>
                 <Button onClick={onClose}>Cancel</Button>
                 {cardId !== "" && (
-                    <Button color="error" onClick={handleRemove}>Delete</Button>
+                    <>
+                        <Button color="error" onClick={() => setConfirmDelete(true)}>Delete</Button>
+                        <Dialog open={confirmDelete} onClose={() => setConfirmDelete(false)}>
+                            <DialogTitle>Confirm Delete</DialogTitle>
+                            <DialogContent>
+                                Are you sure you want to delete this card?
+                            </DialogContent>
+                            <DialogActions>
+                                <Button onClick={() => setConfirmDelete(false)}>Cancel</Button>
+                                <Button color="error" onClick={handleRemove}>Delete</Button>
+                            </DialogActions>
+                        </Dialog>
+                    </>
                 )}
                 <Button
                     variant="contained"
