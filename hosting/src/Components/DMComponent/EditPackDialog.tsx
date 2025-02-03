@@ -1,10 +1,9 @@
 "use client"
 
 import { useState } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Tabs, Tab, Box, FormControl, InputLabel, Select, MenuItem, Typography } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Tabs, Tab, Box, Typography } from "@mui/material";
 import { Pack, PlayingCard } from "../../services/interfaces";
 import PlayCard from "../PlayCard/PlayCard";
-import { rarities } from "@/services/constants";
 import CardList from "../CardList/CardList";
 
 interface EditPackDialogProps {
@@ -30,28 +29,19 @@ interface EditPackDialogProps {
 const EditPackDialog: React.FC<EditPackDialogProps> = ({
     open,
     pack,
-    cards,
     campaignID,
-    nameFilter,
-    categoryFilter,
-    rarityFilter,
     tabIndex,
     onClose,
     onSave,
     onPackChange,
     onToggleCardInPack,
     onWeightChange,
-    onTabChange,
-    onNameFilterChange,
-    onCategoryFilterChange,
-    onRarityFilterChange
-}) => {
+    onTabChange}) => {
     const [viewCard, setViewCard] = useState<string | null>(null);
 
-    const uniqueCategories = ["All", ...new Set(cards.map(card => card.category).filter(category => category !== ""))];
 
     return (
-        <Dialog open={open} onClose={onClose}>
+        <Dialog open={open} maxWidth="md" fullWidth onClose={onClose}>
             <DialogTitle>Edit Pack</DialogTitle>
             <DialogContent>
                 <Tabs value={tabIndex} onChange={onTabChange} centered>
@@ -100,37 +90,6 @@ const EditPackDialog: React.FC<EditPackDialogProps> = ({
                 </Box>
                 <Box hidden={tabIndex !== 1}>
                     <Typography variant="h6">Pick {pack?.picksPerPack}</Typography>
-                    <TextField sx={{ marginTop: 2 }} fullWidth id="namefilter" label="Name filter" variant="outlined"
-                        value={nameFilter}
-                        onChange={(e) => onNameFilterChange(e.target.value)}
-                    />
-                    <FormControl fullWidth sx={{ marginTop: 2 }}>
-                        <InputLabel id="category-filter-label">Category</InputLabel>
-                        <Select
-                            labelId="category-filter-label"
-                            value={categoryFilter || "All"}
-                            label="Category"
-                            onChange={(e) => onCategoryFilterChange(e.target.value === "All" ? "" : e.target.value)}
-                        >
-                            {uniqueCategories.map((category, index) => (
-                                <MenuItem key={index} value={category}>{category}</MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <FormControl fullWidth sx={{ marginTop: 2 }}>
-                        <InputLabel id="rarity-filter-label">Rarity</InputLabel>
-                        <Select
-                            labelId="rarity-filter-label"
-                            value={rarityFilter || ""}
-                            label="Rarity"
-                            onChange={(e) => onRarityFilterChange(e.target.value === "" ? null : parseInt(e.target.value as string))}
-                        >
-                            <MenuItem value="">All</MenuItem>
-                            {Object.entries(rarities).map(([i, v]) => (
-                                <MenuItem key={i} value={i}>{v.name}</MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
                     <CardList
                         campaignID={campaignID}
                         dataSource={pack}
@@ -139,7 +98,7 @@ const EditPackDialog: React.FC<EditPackDialogProps> = ({
                             changeWeight: onWeightChange
                         }}
                         enableSorting={true}
-                        enableFiltering={false}
+                        enableFiltering={true}
                     />
                 </Box>
             </DialogContent>

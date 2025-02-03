@@ -33,7 +33,7 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
 
         return () => clearInterval(interval);
     }, []);
-    const CardInfo = useAppSelector(state => state.campaign.value?.cards.find(card => card.id == CardID)) ||  null;
+    const CardInfo = useAppSelector(state => state.campaign.value?.cards.find(card => card.id == CardID)) || null;
 
     return (
         <Card
@@ -50,7 +50,7 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
                 padding: "8% 8%",
                 transform: "rotateZ(-1deg)",
                 margin: '5px',
-                filter: CardInfo?.category?.toLowerCase() === 'malus' ? 'brightness(75%) hue-rotate(180deg)' : 'none',
+                filter: CardInfo?.tags?.find(val => val === 'Malus') ? 'brightness(75%) hue-rotate(180deg)' : 'none',
             }}
         >
             <CardHeader
@@ -121,7 +121,7 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
                             Costo: {CardInfo?.activation_cost}
                         </Typography>
                         <Typography variant="body2" color="textSecondary" style={responsiveTextStyle}>
-                            Clase: {CardInfo?.category}
+                            Tags: #{CardInfo?.tags?.join("#") || "Ninguno"}
                         </Typography>
                     </>
                 ) : (

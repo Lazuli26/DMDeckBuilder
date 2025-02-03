@@ -10,7 +10,7 @@ export interface PlayingCard {
     name: string;
     rarity: number;
     type: string;
-    category: string;
+    tags?: string[];
     activation_cost: string;
     description: string;
     usage: number;

@@ -1,6 +1,6 @@
 import { PlayingCard, Rarity } from "./interfaces";
 
-export const rarities: {[key: number]: Rarity} = {
+export const rarities: { [key: number]: Rarity } = {
     1: {
         name: 'Legendary',
         color: 'rgba(226, 40, 40, 0.75)',
@@ -23,12 +23,18 @@ export const rarities: {[key: number]: Rarity} = {
     }
 };
 
+export const baseTags = [
+    "Malus", "Dice", "Attack",
+    "Defense", "Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma", "Hit Points",
+    "Armor Class", "Speed", "Initiative", "Saving Throws", "Skills", "Damage", "Healing", "Temporary Hit Points", "Conditions", "Movement", "Range", "Duration", "Targets", "Area of Effect", "Components", "Casting Time", "Concentration", "Ritual", "School", "Level", "Classes", "Subclasses"
+];
+
+
 export const basePlayingCard: PlayingCard = {
     id: "",
     name: "",
     rarity: 0,
     type: "",
-    category: "",
     activation_cost: "",
     description: "",
     usage: 0,

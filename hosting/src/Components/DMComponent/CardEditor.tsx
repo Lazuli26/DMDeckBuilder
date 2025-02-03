@@ -1,10 +1,11 @@
-import { Dialog, DialogActions, DialogContent, DialogTitle, TextField, Button, FormControl, InputLabel, Select, MenuItem, Autocomplete } from "@mui/material";
+import { Dialog, DialogActions, DialogContent, DialogTitle, TextField, Button, FormControl, InputLabel, Select, MenuItem, Chip, Box, IconButton, Autocomplete } from "@mui/material";
 import { PlayingCard } from "@/services/interfaces";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { generateUUID } from "@/services/utils";
 import { upsertCard, removeCard } from "@/services/firestore";
-import { rarities } from "@/services/constants";
 import store from "@/store";
+import { Add as AddIcon, Close as CloseIcon } from "@mui/icons-material";
+import { AppContext } from "@/app/page";
 
 interface CardEditorProps {
     open: boolean;
@@ -17,6 +18,8 @@ interface CardEditorProps {
 const CardEditor: React.FC<CardEditorProps> = ({ open, cardId, campaignID, onClose, onSave }) => {
     const [cardEditor, setCardEditor] = useState<PlayingCard | null>(null);
     const [confirmDelete, setConfirmDelete] = useState(false);
+    const [tagInput, setTagInput] = useState<string>("");
+    const { tags: Tags, types, rarities } = useContext(AppContext);
 
     useEffect(() => {
         if (cardId === "") {
@@ -28,8 +31,8 @@ const CardEditor: React.FC<CardEditorProps> = ({ open, cardId, campaignID, onClo
                 description: "",
                 usage: 0,
                 background: "",
-                category: "",
-                activation_cost: ""
+                activation_cost: "",
+                tags: []
             });
         } else {
             for (const card of store.getState().campaign.value?.cards || []) {
@@ -62,6 +65,19 @@ const CardEditor: React.FC<CardEditorProps> = ({ open, cardId, campaignID, onClo
         }
     };
 
+    const handleAddTag = () => {
+        if (tagInput && cardEditor) {
+            setCardEditor(d => ({ ...d!, tags: [...(d!.tags || []), tagInput] }));
+            setTagInput("");
+        }
+    };
+
+    const handleRemoveTag = (tag: string) => {
+        if (cardEditor) {
+            setCardEditor(d => ({ ...d!, tags: (d!.tags || []).filter(t => t !== tag) }));
+        }
+    };
+
     return (
         <Dialog open={open} onClose={onClose}>
             <DialogTitle>{cardEditor?.id || "New Card"}</DialogTitle>
@@ -76,31 +92,21 @@ const CardEditor: React.FC<CardEditorProps> = ({ open, cardId, campaignID, onClo
                     value={cardEditor?.name || ""}
                     onChange={(e) => setCardEditor(d => ({ ...d!, name: e.target.value || "" }))}
                 />
-                <TextField
-                    sx={{ marginTop: 2 }}
-                    fullWidth
-                    error={submitError.type}
-                    id="type"
-                    label="Activation Type"
-                    variant="outlined"
-                    value={cardEditor?.type || ""}
-                    onChange={(e) => setCardEditor(d => ({ ...d!, type: e.target.value || "" }))}
-                />
                 <Autocomplete
-                    onChange={(e, v) => setCardEditor(d => ({ ...d!, category: v || "" }))}
                     freeSolo
-                    disableClearable
-                    value={cardEditor?.category || ""}
-                    id="category-autocomplete"
-                    options={[...new Set(cardEditor?.category ? [cardEditor.category] : [])].filter(val => val !== "").sort()}
+                    options={types}
+                    value={cardEditor?.type || ""}
+                    onChange={(event, newValue) => setCardEditor(d => ({ ...d!, type: newValue || "" }))}
                     renderInput={(params) => (
                         <TextField
                             {...params}
                             sx={{ marginTop: 2 }}
                             fullWidth
-                            id="category"
-                            label="Card Category"
+                            error={submitError.type}
+                            id="type"
+                            label="Activation Type"
                             variant="outlined"
+                            onChange={(e) => setCardEditor(d => ({ ...d!, type: e.target.value || "" }))}
                         />
                     )}
                 />
@@ -158,12 +164,47 @@ const CardEditor: React.FC<CardEditorProps> = ({ open, cardId, campaignID, onClo
                     value={cardEditor?.description || ""}
                     onChange={(e) => setCardEditor(d => ({ ...d!, description: e.target.value || "" }))}
                 />
+                <Autocomplete
+                    freeSolo
+                    options={Tags}
+                    value={tagInput}
+                    onChange={(event, newValue) => setTagInput(newValue || "")}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            sx={{ marginTop: 2 }}
+                            fullWidth
+                            id="tags"
+                            label="Tags"
+                            variant="outlined"
+                            onChange={(e) => setTagInput(e.target.value)}
+                            InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                    <IconButton onClick={handleAddTag}>
+                                        <AddIcon />
+                                    </IconButton>
+                                )
+                            }}
+                        />
+                    )}
+                />
+                <Box sx={{ marginTop: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {cardEditor?.tags?.map((tag, index) => (
+                        <Chip
+                            key={index}
+                            label={tag}
+                            onDelete={() => handleRemoveTag(tag)}
+                            deleteIcon={<CloseIcon />}
+                        />
+                    ))}
+                </Box>
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose}>Cancel</Button>
                 {cardId !== "" && (
                     <>
-                        <Button color="error" onClick={() => setConfirmDelete(true)}>Delete</Button>
+                        <Button variant="contained" color="error" onClick={() => setConfirmDelete(true)}>Delete</Button>
                         <Dialog open={confirmDelete} onClose={() => setConfirmDelete(false)}>
                             <DialogTitle>Confirm Delete</DialogTitle>
                             <DialogContent>

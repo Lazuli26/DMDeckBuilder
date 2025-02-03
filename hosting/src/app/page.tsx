@@ -3,13 +3,38 @@
 import { DMComponent } from "@/Components/DMComponent/DMComponent";
 import PlayerComponent from "@/Components/PlayerComponent/PlayerComponent";
 import { getCampaignList, getCampaignPlayers, subscribeToCampaign } from "@/services/firestore";
-import { Player } from "@/services/interfaces";
+import { Player, Rarity } from "@/services/interfaces";
 import { FormControl, InputLabel, Select, MenuItem, AppBar, Toolbar, Typography, IconButton, Box, Paper } from "@mui/material";
 import HomeIcon from '@mui/icons-material/Home';
 import { useState, useEffect } from "react";
 import { Provider } from 'react-redux';
 import { setCampaign } from '@/store/campaignSlice';
 import store from "@/store";
+import { baseTags, rarities } from "@/services/constants";
+import { useAppSelector } from "@/store/reduxHooks";
+import React from "react";
+
+export const AppContext = React.createContext<{ tags: string[], types: string[], rarities: { [key: number]: Rarity } }>(
+  {
+    tags: [],
+    types: [],
+    rarities: rarities
+  }
+);
+
+const ContextWrapper: React.FC<React.PropsWithChildren<object>> = ({ children }) => {
+  const tags = useAppSelector(state => {
+    const campaignTags = state.campaign.value?.cards?.flatMap(card => card.tags || []) || [];
+    return [...new Set([...baseTags, ...campaignTags])].sort();
+  });
+
+  const types = useAppSelector(state => {
+    const campaignTypes = state.campaign.value?.cards?.flatMap(card => card.type) || [];
+    return [...new Set(campaignTypes)].sort();
+  });
+
+  return <AppContext.Provider value={{ tags, types, rarities }}>{children}</AppContext.Provider>;
+}
 
 export default function Home() {
   const [campaignList, setcampaignList] = useState<{ id: string, name: string }[]>([])
@@ -74,40 +99,41 @@ export default function Home() {
         </Toolbar>
       </AppBar>
       <Provider store={store}>
-
-        <Paper sx={{ width: "100%", background: "rgb(166, 166, 166)", overflow: "auto", height: "100%", maxHeight: "100%", padding: "1rem" }}>
-          {!selectedPlayer &&
-            <FormControl fullWidth>
-              <InputLabel id="campaign-selector-label">Select a campaign</InputLabel>
-              <Select
-                labelId="campaign-selector-label"
-                id="campaign-selector"
-                value={selectedCampaign}
-                label="Select a campaign"
-                onChange={e => {
-                  selectCampaign(e.target.value);
-                  selectPlayer(null);
-                }}
-              >
-                {campaignList.map((v, i) => <MenuItem key={i} value={v.id}>{v.name}</MenuItem>)}
-              </Select>
-            </FormControl>
-          }
-          {selectedCampaign && !selectedPlayer &&
-            <FormControl fullWidth>
-              <InputLabel id="player-selector-label">Select a player</InputLabel>
-              <Select
-                labelId="player-selector-label"
-                id="player-selector"
-                value={selectedPlayer || ""}
-                label="Select a player"
-                onChange={e => selectPlayer(e.target.value)}
-              ><MenuItem value={"DM"}>DM</MenuItem>
-                {playerList.map((v, i) => <MenuItem key={i} value={v.id}>{v.name}</MenuItem>)}
-              </Select>
-            </FormControl>}
-          {selectedPlayer == "DM" ? <DMComponent CampaignID={selectedCampaign} /> : selectedPlayer && <PlayerComponent CampaignID={selectedCampaign} PlayerID={selectedPlayer} />}
-        </Paper>
+        <ContextWrapper>
+          <Paper sx={{ width: "100%", background: "rgb(166, 166, 166)", overflow: "auto", height: "100%", maxHeight: "100%", padding: "1rem" }}>
+            {!selectedPlayer &&
+              <FormControl fullWidth>
+                <InputLabel id="campaign-selector-label">Select a campaign</InputLabel>
+                <Select
+                  labelId="campaign-selector-label"
+                  id="campaign-selector"
+                  value={selectedCampaign}
+                  label="Select a campaign"
+                  onChange={e => {
+                    selectCampaign(e.target.value);
+                    selectPlayer(null);
+                  }}
+                >
+                  {campaignList.map((v, i) => <MenuItem key={i} value={v.id}>{v.name}</MenuItem>)}
+                </Select>
+              </FormControl>
+            }
+            {selectedCampaign && !selectedPlayer &&
+              <FormControl fullWidth>
+                <InputLabel id="player-selector-label">Select a player</InputLabel>
+                <Select
+                  labelId="player-selector-label"
+                  id="player-selector"
+                  value={selectedPlayer || ""}
+                  label="Select a player"
+                  onChange={e => selectPlayer(e.target.value)}
+                ><MenuItem value={"DM"}>DM</MenuItem>
+                  {playerList.map((v, i) => <MenuItem key={i} value={v.id}>{v.name}</MenuItem>)}
+                </Select>
+              </FormControl>}
+            {selectedPlayer == "DM" ? <DMComponent CampaignID={selectedCampaign} /> : selectedPlayer && <PlayerComponent CampaignID={selectedCampaign} PlayerID={selectedPlayer} />}
+          </Paper>
+        </ContextWrapper>
       </Provider>
     </Box>
   );
