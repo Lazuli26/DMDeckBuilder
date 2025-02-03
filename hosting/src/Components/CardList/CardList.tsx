@@ -7,7 +7,7 @@ import { PlayingCard, Pack, Player } from "@/services/interfaces";
 import PlayCard from "../PlayCard/PlayCard";
 import CardEditor from "../DMComponent/CardEditor";
 import { rarities, basePlayingCard } from "@/services/constants";
-import { AppContext } from "@/app/page";
+import { AppContext } from "../AppContext";
 
 interface CardListProps {
     campaignID: string;

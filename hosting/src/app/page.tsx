@@ -3,38 +3,16 @@
 import { DMComponent } from "@/Components/DMComponent/DMComponent";
 import PlayerComponent from "@/Components/PlayerComponent/PlayerComponent";
 import { getCampaignList, getCampaignPlayers, subscribeToCampaign } from "@/services/firestore";
-import { Player, Rarity } from "@/services/interfaces";
+import { Player } from "@/services/interfaces";
 import { FormControl, InputLabel, Select, MenuItem, AppBar, Toolbar, Typography, IconButton, Box, Paper } from "@mui/material";
 import HomeIcon from '@mui/icons-material/Home';
 import { useState, useEffect } from "react";
 import { Provider } from 'react-redux';
 import { setCampaign } from '@/store/campaignSlice';
 import store from "@/store";
-import { baseTags, rarities } from "@/services/constants";
-import { useAppSelector } from "@/store/reduxHooks";
 import React from "react";
+import { ContextWrapper } from "@/Components/AppContext";
 
-export const AppContext = React.createContext<{ tags: string[], types: string[], rarities: { [key: number]: Rarity } }>(
-  {
-    tags: [],
-    types: [],
-    rarities: rarities
-  }
-);
-
-const ContextWrapper: React.FC<React.PropsWithChildren<object>> = ({ children }) => {
-  const tags = useAppSelector(state => {
-    const campaignTags = state.campaign.value?.cards?.flatMap(card => card.tags || []) || [];
-    return [...new Set([...baseTags, ...campaignTags])].sort();
-  });
-
-  const types = useAppSelector(state => {
-    const campaignTypes = state.campaign.value?.cards?.flatMap(card => card.type) || [];
-    return [...new Set(campaignTypes)].sort();
-  });
-
-  return <AppContext.Provider value={{ tags, types, rarities }}>{children}</AppContext.Provider>;
-}
 
 export default function Home() {
   const [campaignList, setcampaignList] = useState<{ id: string, name: string }[]>([])

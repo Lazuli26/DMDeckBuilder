@@ -13,7 +13,6 @@ export const basePlayingCard: PlayingCard = {
     description: "",
     usage: 0,
     background: "",
-    category: "",
     activation_cost: ""
 };
 
