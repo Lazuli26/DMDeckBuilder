@@ -1,19 +1,21 @@
 import { Pack } from "@/services/interfaces";
 import { useAppSelector } from "@/store/reduxHooks";
 import { ExpandMore } from '@mui/icons-material';
-import { Accordion, AccordionDetails, AccordionSummary, Card, CardContent, CardHeader, Dialog, Grid2, List, Tab, Tabs, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Card, CardContent, CardHeader, Dialog, Grid2, List, Tab, Tabs, Typography, Box } from "@mui/material";
 import { useState } from "react";
 import CardList from "../CardList/CardList";
 import CardShowCase from "../CardShowCase/CardShowCase";
 import PlayCard from "../PlayCard/PlayCard";
 import "./style.css";
+import _ from "lodash";
 
 const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ CampaignID, PlayerID }) => {
     const players = useAppSelector(state => state.campaign.value?.players || []);
     const cards = useAppSelector(state => state.campaign.value?.cards || []);
     const packs = useAppSelector(state => state.campaign.value?.packs || []);
+    const shop = useAppSelector(state => state.campaign.value?.shop || {});
     const [viewCard, setViewCard] = useState<{ cardId: string, timesUsed: number } | null>(null);
-    const [viewPack, setViewPack] = useState<Pack | null>(null); // Add this state
+    const [viewPack, setViewPack] = useState<Pack | null>(null);
     const [tabIndex, setTabIndex] = useState(0);
 
     const currentPlayer = players.find(p => p.id === PlayerID);
@@ -47,6 +49,7 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
                         <Tab label="Inventory" />
                         <Tab label="Card Catalog" />
                         <Tab label="Pack Catalog" />
+                        <Tab label="Shop" />
                     </Tabs>
                     {tabIndex === 0 && (
                         <>
@@ -102,6 +105,17 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
                                 </Grid2>
                             ))}
                         </Grid2>
+                    )}
+                    {tabIndex === 3 && (
+                        <CardList
+                            campaignID={CampaignID}
+                            dataSource={_.reduce(Object.keys(shop), (prev, key) => ({...prev, [key]: shop[key].cardId}), {})}
+                            customControls={(item) => (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Typography variant="body1">Price: {shop[item.originalKey as string]?.price}</Typography>
+                                </Box>
+                            )}
+                        />
                     )}
                 </CardContent>
             </Card>

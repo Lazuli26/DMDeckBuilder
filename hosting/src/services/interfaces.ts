@@ -26,12 +26,13 @@ export interface Pack {
     background: string;
     cardPool: { cardId: string; weight?: number }[];
 }
-
+export type ShopItem = { cardId: string; price: number };
 export interface Campaign {
     name: string;
     players: Player[];
     cards: PlayingCard[];
     packs: Pack[];
+    shop?: {[key: string]: ShopItem};
     cardShowcase?: string[]; // If not empty, a dialog will open with the cards in this array for all players and the DM
 }
 

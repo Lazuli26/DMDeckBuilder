@@ -1,6 +1,6 @@
 import { addDoc, collection, doc, getDoc, getDocs, onSnapshot, Unsubscribe, updateDoc } from "firebase/firestore"
 import { db } from "./firebase";
-import { Campaign, Player, PlayingCard, Pack } from "./interfaces";
+import { Campaign, Player, PlayingCard, Pack, ShopItem } from "./interfaces";
 import { generateUUID } from "./utils";
 
 export function getDocument<T>(collectionName: string, documentName: string, callback: (dato: T | undefined) => void): Unsubscribe {
@@ -184,27 +184,27 @@ export async function getPacks(campaignId: string): Promise<Pack[]> {
     const campaign = await getCampaign(campaignId);
     return campaign ? campaign.packs : [];
 }
-export function subscribeToPacks(campaignId: string, callback: (data: Pack[])=> void): Unsubscribe {
+export function subscribeToPacks(campaignId: string, callback: (data: Pack[]) => void): Unsubscribe {
     return onSnapshot(doc(db, "campaigns", campaignId), (docSnap) => {
-      if (docSnap.exists()) {
-        const campaign = docSnap.data() as Campaign;
-        callback(campaign.packs);
-      } else {
-        callback([]);
-      }
+        if (docSnap.exists()) {
+            const campaign = docSnap.data() as Campaign;
+            callback(campaign.packs);
+        } else {
+            callback([]);
+        }
     });
-    
+
 }
-export function subscribeToCardShowCase(campaignId: string, callback: (data: Campaign["cardShowcase"])=> void): Unsubscribe {
+export function subscribeToCardShowCase(campaignId: string, callback: (data: Campaign["cardShowcase"]) => void): Unsubscribe {
     return onSnapshot(doc(db, "campaigns", campaignId), (docSnap) => {
-      if (docSnap.exists()) {
-        const campaign = docSnap.data() as Campaign;
-        callback(campaign.cardShowcase);
-      } else {
-        callback([]);
-      }
+        if (docSnap.exists()) {
+            const campaign = docSnap.data() as Campaign;
+            callback(campaign.cardShowcase);
+        } else {
+            callback([]);
+        }
     });
-    
+
 }
 
 // Get all cards from a campaign
@@ -224,20 +224,20 @@ export async function getCardInfo(campaignId: string, cardId: string): Promise<P
 // Subscribe to cards in a campaign
 export function subscribeToCards(campaignId: string, callback: (cards: PlayingCard[]) => void): Unsubscribe {
     return onSnapshot(doc(db, "campaigns", campaignId), (docSnap) => {
-      if (docSnap.exists()) {
-        const campaign = docSnap.data() as Campaign;
-        callback(Object.values(campaign.cards));
-      } else {
-        callback([]);
-      }
+        if (docSnap.exists()) {
+            const campaign = docSnap.data() as Campaign;
+            callback(Object.values(campaign.cards));
+        } else {
+            callback([]);
+        }
     });
-  }
+}
 
 // Subscribe to a specific card
 export function subscribeToCard(campaignId: string, cardId: string, callback: (card: PlayingCard | null) => void): Unsubscribe {
-  return subscribeToCards(campaignId, (cards) => {
-    callback(cards.find(card => card.id === cardId) || null);
-  });
+    return subscribeToCards(campaignId, (cards) => {
+        callback(cards.find(card => card.id === cardId) || null);
+    });
 }
 
 // Get specific pack information
@@ -267,28 +267,47 @@ export async function getCampaignPlayers(campaignId: string): Promise<Player[]> 
 // Subscribe to campaign players
 export function subscribeToPlayers(campaignId: string, callback: (players: Player[]) => void): Unsubscribe {
     return onSnapshot(doc(db, "campaigns", campaignId), (docSnap) => {
-      if (docSnap.exists()) {
-        const campaign = docSnap.data() as Campaign;
-        callback(campaign.players);
-      } else {
-        callback([]);
-      }
+        if (docSnap.exists()) {
+            const campaign = docSnap.data() as Campaign;
+            callback(campaign.players);
+        } else {
+            callback([]);
+        }
     });
-  }
+}
 // Subscribe to campaign
 export function subscribeToCampaign(campaignId: string, callback: (Campaign: Campaign | null) => void): Unsubscribe {
     return onSnapshot(doc(db, "campaigns", campaignId), (docSnap) => {
-      if (docSnap.exists()) {
-        const campaign = docSnap.data() as Campaign;
-        callback(campaign);
-      } else {
-        callback(null);
-      }
+        if (docSnap.exists()) {
+            const campaign = docSnap.data() as Campaign;
+            callback(campaign);
+        } else {
+            callback(null);
+        }
     });
-  }
+}
 
 // Set or clear the cardShowcase property of a campaign
 export async function setCardShowcase(campaignId: string, cardIds: string[] = []): Promise<void> {
     const campaignRef = doc(db, "campaigns", campaignId);
     await updateDoc(campaignRef, { cardShowcase: cardIds });
 }
+
+export const modifyShop = async (campaignID: string, action: { type: "add" | "update" | "remove", payload?: ShopItem, key?: string }) => {
+    const campaignRef = doc(db, "campaigns", campaignID);
+    const campaignDoc = await getDoc(campaignRef);
+    const campaign = campaignDoc.data() as Campaign;
+    const shop = campaign?.shop || {};
+
+    if (action.type === "add" && action.payload?.price !== undefined) {
+        const newUUID = generateUUID();
+        shop[newUUID] = action.payload;
+        await updateDoc(campaignRef, { shop });
+    } else if (action.type === "remove" && action.key !== undefined) {
+        delete shop[action.key];
+        await updateDoc(campaignRef, { shop });
+    } else if (action.type === "update" && action.payload !== undefined && action.key !== undefined) {
+        shop[action.key] = { ...shop[action.key], ...action.payload };
+        await updateDoc(campaignRef, { shop });
+    }
+};

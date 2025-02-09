@@ -6,8 +6,8 @@ import PlayCard from "../PlayCard/PlayCard";
 import CardManagement from "./CardManagement";
 import PlayerManagement from "./PlayerManagement";
 import PackManager from "./PackManager";
+import ShopManager from "./ShopManager";
 import CardShowCase from "../CardShowCase/CardShowCase";
-
 
 export const DMComponent: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
     const [viewCard, setViewCard] = useState("");
@@ -27,14 +27,17 @@ export const DMComponent: React.FC<{ CampaignID: string }> = ({ CampaignID }) =>
             <CardShowCase CampaignID={CampaignID} isDM={true} />
             {isLandscape ? (
                 <Grid2 container spacing={2} display="flex" width="100%" height="100%">
-                    <Grid2 size={6} sx={{maxHeight: "100%", overflow: "auto"}}>
+                    <Grid2 size={6} sx={{ maxHeight: "100%", overflow: "auto" }}>
                         <CardManagement CampaignID={CampaignID} />
                     </Grid2>
-                    <Grid2 size={6} sx={{maxHeight: "100%", overflow: "auto"}}>
+                    <Grid2 size={6} sx={{ maxHeight: "100%", overflow: "auto" }}>
                         <PlayerManagement CampaignID={CampaignID} />
                     </Grid2>
-                    <Grid2 size={6} sx={{maxHeight: "100%", overflow: "auto"}}>
+                    <Grid2 size={6} sx={{ maxHeight: "100%", overflow: "auto" }}>
                         <PackManager CampaignID={CampaignID} />
+                    </Grid2>
+                    <Grid2 size={6} sx={{ maxHeight: "100%", overflow: "auto" }}>
+                        <ShopManager CampaignID={CampaignID} />
                     </Grid2>
                 </Grid2>
             ) : (
@@ -43,6 +46,7 @@ export const DMComponent: React.FC<{ CampaignID: string }> = ({ CampaignID }) =>
                         <Tab label="Card Management" />
                         <Tab label="Player Management" />
                         <Tab label="Pack Management" />
+                        <Tab label="Shop Management" />
                     </Tabs>
                     <Box hidden={tabIndex !== 0}>
                         <CardManagement CampaignID={CampaignID} />
@@ -52,6 +56,9 @@ export const DMComponent: React.FC<{ CampaignID: string }> = ({ CampaignID }) =>
                     </Box>
                     <Box hidden={tabIndex !== 2}>
                         <PackManager CampaignID={CampaignID} />
+                    </Box>
+                    <Box hidden={tabIndex !== 3}>
+                        <ShopManager CampaignID={CampaignID} />
                     </Box>
                 </>
             )}

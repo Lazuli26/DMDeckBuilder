@@ -8,20 +8,24 @@ import PlayCard from "../PlayCard/PlayCard";
 import CardEditor from "../DMComponent/CardEditor";
 import { rarities, basePlayingCard } from "@/services/constants";
 import { AppContext } from "../AppContext";
+import { isObject } from "lodash";
+import _ from "lodash";
 
 interface CardListProps {
     campaignID: string;
-    dataSource: string[] | Pack | Player;
+    dataSource: string[] | { [key: string]: string } | Pack | Player;
     packEditControls?: { toggleCard: (cardId: string) => void, changeWeight: (cardId: string, weight: number | null) => void };
     isDM?: boolean;
     enableSorting?: boolean;
     enableFiltering?: boolean;
+    customControls?: (item: CardListItem) => React.ReactNode;
 }
 
 type CardListItem = {
     cardId?: string;
     packInfo?: Omit<Pack["cardPool"][0], "cardId">;
     playerInfo?: Omit<Player["Cards"][string], "cardId"> & { inventoryKey: string };
+    originalKey: number | string;
 }
 
 const normalizeString = (str: string) => {
@@ -77,7 +81,7 @@ const getCardUsageText = (card: PlayingCard, timesUsed: number) => {
     return card.usage === -1 ? `Times Used: ${timesUsed} / ∞` : `Times Used: ${timesUsed} / ${card.usage}`;
 };
 
-const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = false, packEditControls, enableSorting = false, enableFiltering = false }) => {
+const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = false, packEditControls, enableSorting = false, enableFiltering = false, customControls }) => {
     const cardCatalog = useAppSelector(state => state.campaign.value?.cards || []).map(card => ({ ...basePlayingCard, ...card }));
     const [cardListData, setCardListData] = useState<CardListItem[]>([]);
     const [viewCard, setViewCard] = useState<string | null>(null);
@@ -95,24 +99,25 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
     useEffect(() => {
         const cardListData: CardListItem[] = [];
         if (Array.isArray(dataSource)) {
-            for (const cardId of dataSource) {
-                cardListData.push({ cardId });
-            }
-        } else if ('cardPool' in dataSource) {
-            for (const { cardId, weight } of dataSource.cardPool) {
-
-                const packCardData: CardListItem = { cardId, packInfo: { weight } };
-                cardListData.push(packCardData);
-            }
-        } else if ('Cards' in dataSource) {
+            dataSource.map((cardId, originalIndex) => cardListData.push({ cardId, originalKey: originalIndex }));
+        }
+        else if ('Cards' in dataSource) {
             for (const [inventoryKey, { cardId, timesUsed }] of Object.entries(dataSource.Cards)) {
-                const playerCardData: CardListItem = { cardId, playerInfo: { inventoryKey, timesUsed } };
+                const playerCardData: CardListItem = { cardId, playerInfo: { inventoryKey, timesUsed }, originalKey: inventoryKey };
                 cardListData.push(playerCardData);
             }
         }
+        else if ('cardPool' in dataSource && isObject(dataSource.cardPool)) {
+            dataSource.cardPool.map(({ cardId, weight }, originalIndex) => {
+                const packCardData: CardListItem = { cardId, packInfo: { weight }, originalKey: originalIndex };
+                cardListData.push(packCardData);
+            });
+        }
+        else if (_.isString(Object.entries(dataSource)[0]?.[1])) {
+            Object.entries(dataSource).sort().map(([key, cardId]) => cardListData.push({ cardId, originalKey: key }));
+        }
         setCardListData(cardListData);
     }, [campaignID, dataSource]);
-
 
     const handleShowcaseCard = async (cardId: string) => {
         await setCardShowcase(campaignID, [cardId]);
@@ -156,7 +161,6 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
     };
 
     const paginatedCardItems = sortedCardItems.slice((page - 1) * cardsPerPage, page * cardsPerPage);
-
     return (
         <>
             {enableFiltering && (
@@ -322,6 +326,7 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
                                     )}
                                 </Box>
                             )}
+                            {customControls && customControls(item!)}
                             <Box
                                 component="img"
                                 src={card!.background}
