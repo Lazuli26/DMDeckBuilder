@@ -1,12 +1,13 @@
 "use client"
 
 import { useState } from "react";
-import { Tabs, Tab, Box, useMediaQuery, useTheme, Grid2 } from "@mui/material";
-import CardManagement from "./CardManagement";
-import PlayerManagement from "./PlayerManagement";
-import PackManager from "./PackManager";
+import { Tabs, Tab, Box, useMediaQuery, useTheme, Grid2, Button } from "@mui/material";
+import CardManagement from "./CardCatalog/CardManagement";
 import ShopManager from "./ShopManager";
 import CardShowCase from "../CardShowCase/CardShowCase";
+import PackManager from "./PackCatalog/PackManager";
+import PlayerManagement from "./PlayerManagement";
+import { getCampaign } from "@/services/firestore";
 
 export const DMComponent: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
     const [tabIndex, setTabIndex] = useState(0);
@@ -17,9 +18,25 @@ export const DMComponent: React.FC<{ CampaignID: string }> = ({ CampaignID }) =>
         setTabIndex(newValue);
     };
 
+    const handleBackupDownload = async () => {
+        const data = await getCampaign(CampaignID);
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const date = new Date().toISOString().split('T')[0];
+        link.href = url;
+        link.download = `${data?.name}_backup_${date}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <>
             <CardShowCase CampaignID={CampaignID} isDM={true} />
+            <Button variant="contained" color="primary" onClick={handleBackupDownload}>
+                Download Backup
+            </Button>
             {isLandscape ? (
                 <Grid2 container spacing={2} display="flex" width="100%" height="100%">
                     <Grid2 size={6} sx={{ maxHeight: "100%", overflow: "auto" }}>

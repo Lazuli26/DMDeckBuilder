@@ -1,7 +1,7 @@
 import { PlayingCard } from "@/services/interfaces";
 import { IconButton, Card, CardContent, CardHeader, Tooltip } from "@mui/material";
 import { useState } from "react";
-import CardList from "../CardList/CardList";
+import CardList from "../../CardList/CardList";
 import CardEditor from "./CardEditor";
 import { useAppSelector } from "@/store/reduxHooks";
 import BackupIcon from '@mui/icons-material/Backup';

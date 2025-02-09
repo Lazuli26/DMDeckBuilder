@@ -3,6 +3,7 @@ import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signO
 import { doc, setDoc } from "firebase/firestore";
 import { Button, Box, Typography } from "@mui/material";
 import { app, db } from "@/services/firebase";
+import { AppUser } from "@/services/interfaces";
 
 export interface AuthContextProps {
     user: User | null;
@@ -33,7 +34,7 @@ const AuthWrapper: React.FC<React.PropsWithChildren<object>> = ({ children }) =>
                 await setDoc(doc(db, "users", user.uid), {
                     lastLogin: new Date().toISOString(),
                     displayName: user.displayName,
-                }, { merge: true });
+                } as AppUser, { merge: true });
             } else {
                 setUser(null);
             }

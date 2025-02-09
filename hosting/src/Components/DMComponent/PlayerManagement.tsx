@@ -1,36 +1,37 @@
-import { upsertPlayer, modifyPlayerCards } from "@/services/firestore";
+import { upsertPlayer, modifyPlayerCards, linkUserToPlayer } from "@/services/firestore";
 import { Player } from "@/services/interfaces";
-import { Button, Card, CardContent, CardHeader, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemText, TextField, Box, FormControl, InputLabel, Select, MenuItem, IconButton } from "@mui/material";
+import { Button, Card, CardContent, CardHeader, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemText, TextField, Box, FormControl, InputLabel, Select, MenuItem, IconButton, Tabs, Tab } from "@mui/material";
 import { useState } from "react";
 import { ExpandMore, Add, Remove, Shuffle } from '@mui/icons-material';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import { rarities } from "@/services/constants";
-import CardList from "../CardList/CardList";
 import { useAppSelector } from "@/store/reduxHooks";
+import CardList from "../CardList/CardList";
+import _ from "lodash";
 
 const basePlayer: Player = {
-    id: "",
     name: "",
     balance: 0,
     Cards: {}
 };
 
 const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
-    const playerList = useAppSelector(state => state.campaign.value?.players || []);
+    const playerList = useAppSelector(state => state.campaign.value?.players || {});
     const cards = useAppSelector(state => state.campaign.value?.cards || []);
     const [newPlayer, setNewPlayer] = useState<Player | null>(null);
-    const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+    const [selectedPlayer, setSelectedPlayer] = useState<{ ID: string, data: Player } | null>(null);
     const [rarityFilter, setRarityFilter] = useState<number | null>(null);
+    const [tabIndex, setTabIndex] = useState(0);
 
     const playerSubmitError = {
         name: newPlayer?.name === "",
         balance: newPlayer?.balance === 0
     };
 
-    const updatePlayerBalance = async (player: Player, amount: number, event: React.MouseEvent) => {
+    const updatePlayerBalance = async (ID: string, amount: number, event: React.MouseEvent) => {
         event.stopPropagation();
-        const updatedPlayer = { ...player, balance: player.balance + amount };
-        await upsertPlayer(CampaignID, updatedPlayer);
+        const updatedPlayer = { ...playerList[ID], balance: playerList[ID].balance + amount };
+        await upsertPlayer(CampaignID, updatedPlayer, ID);
     };
 
     const getFilteredCards = () => {
@@ -52,8 +53,12 @@ const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
 
     const addCardToInventory = async (cardID: string) => {
         if (selectedPlayer) {
-            await modifyPlayerCards(CampaignID, selectedPlayer.id, "add", cardID);
+            await modifyPlayerCards(CampaignID, selectedPlayer.ID, "add", cardID);
         }
+    };
+
+    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+        setTabIndex(newValue);
     };
 
     return (
@@ -61,33 +66,33 @@ const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
             <CardHeader title="Player Management" />
             <CardContent>
                 <List>
-                    {playerList.map((val, index) => (
-                        <Accordion key={index}>
+                    {_.map(_.entries(playerList).sort(), ([ID, player]) => {
+                        return <Accordion key={ID}>
                             <AccordionSummary expandIcon={<ExpandMore />}>
                                 <ListItemText
-                                    primary={val.name}
+                                    primary={player.name}
                                     secondary={
                                         <>
-                                            <Remove onClick={(event) => updatePlayerBalance(val, -1, event)} />
-                                            Balance: {val.balance}
-                                            <Add onClick={(event) => updatePlayerBalance(val, 1, event)} />
+                                            <Remove onClick={(event) => updatePlayerBalance(ID, -1, event)} />
+                                            Balance: {player.balance}
+                                            <Add onClick={(event) => updatePlayerBalance(ID, 1, event)} />
                                         </>
                                     }
                                 />
                             </AccordionSummary>
                             <AccordionDetails>
-                                <Button variant="contained" onClick={() => setSelectedPlayer(val)}>Add Card</Button>
+                                <Button variant="contained" onClick={() => setSelectedPlayer({ ID, data: player })}>Edit Player</Button>
                                 <CardList
                                     campaignID={CampaignID}
-                                    dataSource={val}
+                                    dataSource={{ ...player, id: ID }}
                                     isDM={true}
                                 />
                             </AccordionDetails>
                         </Accordion>
-                    ))}
+                    })}
                     <ListItem>
                         <ListItemText primary="New Player" />
-                        <Button onClick={() => setNewPlayer({ ...basePlayer, id: "" })}>Create</Button>
+                        <Button onClick={() => setNewPlayer({ ...basePlayer })}>Create</Button>
                     </ListItem>
                 </List>
                 {newPlayer && (
@@ -134,47 +139,91 @@ const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
                 )}
                 {selectedPlayer && (
                     <Dialog open={!!selectedPlayer} onClose={() => setSelectedPlayer(null)}>
-                        <DialogTitle>Add Card to {selectedPlayer.name}</DialogTitle>
+                        <DialogTitle>Edit Player {playerList[selectedPlayer.ID].name}</DialogTitle>
                         <DialogContent>
-                            <FormControl fullWidth sx={{ marginBottom: 2 }}>
-                                <InputLabel id="rarity-filter-label">Rarity</InputLabel>
-                                <Select
-                                    labelId="rarity-filter-label"
-                                    value={rarityFilter || ""}
-                                    label="Rarity"
-                                    onChange={(e) => setRarityFilter(e.target.value === "" ? null : parseInt(e.target.value as string))}
-                                >
-                                    <MenuItem value="">All</MenuItem>
-                                    {Object.entries(rarities).map(([i, v]) => (
-                                        <MenuItem key={i} value={i}>{v.name}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                            <CardList
-                                campaignID={CampaignID}
-                                dataSource={getFilteredCards().map(card => card.id)}
-                                enableFiltering
-                                enableSorting
-                                customControls={(item) => (
-                                    <IconButton
-                                        onClick={() => addCardToInventory(item.cardId)}
-                                    >
-                                        <Add />
-                                    </IconButton>
-                                )}
-                            />
-                            <Box display="flex" justifyContent="space-between" mt={2}>
-                                <Button
-                                    variant="contained"
-                                    startIcon={<Shuffle />}
-                                    onClick={() => addCardToInventory(getRandomCard().id)}
-                                >
-                                    Random
-                                </Button>
-                            </Box>
+                            <Tabs value={tabIndex} onChange={handleTabChange}>
+                                <Tab label="Add Card" />
+                                <Tab label="Edit Details" />
+                            </Tabs>
+                            {tabIndex === 0 && (
+                                <>
+                                    <FormControl fullWidth sx={{ marginBottom: 2 }}>
+                                        <InputLabel id="rarity-filter-label">Rarity</InputLabel>
+                                        <Select
+                                            labelId="rarity-filter-label"
+                                            value={rarityFilter || ""}
+                                            label="Rarity"
+                                            onChange={(e) => setRarityFilter(e.target.value === "" ? null : parseInt(e.target.value as string))}
+                                        >
+                                            <MenuItem value="">All</MenuItem>
+                                            {Object.entries(rarities).map(([i, v]) => (
+                                                <MenuItem key={i} value={i}>{v.name}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                    <CardList
+                                        campaignID={CampaignID}
+                                        dataSource={getFilteredCards().map(card => card.id)}
+                                        enableFiltering
+                                        enableSorting
+                                        customControls={(item) => (
+                                            <IconButton
+                                                onClick={() => addCardToInventory(item.cardId)}
+                                            >
+                                                <Add />
+                                            </IconButton>
+                                        )}
+                                    />
+                                    <Box display="flex" justifyContent="space-between" mt={2}>
+                                        <Button
+                                            variant="contained"
+                                            startIcon={<Shuffle />}
+                                            onClick={() => addCardToInventory(getRandomCard().id)}
+                                        >
+                                            Random
+                                        </Button>
+                                    </Box>
+                                </>
+                            )}
+                            {tabIndex === 1 && (
+                                <>
+                                    <TextField
+                                        sx={{ marginTop: 2 }}
+                                        fullWidth
+                                        id="playername"
+                                        label="Name"
+                                        variant="outlined"
+                                        value={selectedPlayer.data.name || ""}
+                                        onChange={(e) => setSelectedPlayer(d => ({ ...d!, data: { ...d!.data, name: e.target.value || "" } }))}
+                                    />
+                                    <TextField
+                                        sx={{ marginTop: 2 }}
+                                        fullWidth
+                                        id="userid"
+                                        label="User ID"
+                                        variant="outlined"
+                                        value={selectedPlayer.data.userId || ""}
+                                        onChange={(e) => setSelectedPlayer(d => ({ ...d!, data: { ...d!.data, userId: e.target.value || "" } }))}
+                                    />
+                                </>
+                            )}
                         </DialogContent>
                         <DialogActions>
                             <Button onClick={() => setSelectedPlayer(null)}>Close</Button>
+                            <Button
+                                variant="contained"
+                                onClick={() => {
+                                    if (selectedPlayer) {
+                                        if (selectedPlayer.data.userId) {
+                                            linkUserToPlayer(CampaignID, selectedPlayer.ID, selectedPlayer.data.userId);
+                                        }
+                                        upsertPlayer(CampaignID, selectedPlayer.data, selectedPlayer.ID)
+                                        setSelectedPlayer(null);
+                                    }
+                                }}
+                            >
+                                Save
+                            </Button>
                         </DialogActions>
                     </Dialog>
                 )}

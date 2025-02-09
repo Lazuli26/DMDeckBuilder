@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { useAppSelector } from "@/store/reduxHooks";
 import { Box, TextField, IconButton, Typography, Card, CardContent, CardHeader } from "@mui/material";
 import { Close, Add } from "@mui/icons-material";
-import { modifyShop } from "@/services/firestore";
 import CardList from "../CardList/CardList";
 import _ from "lodash";
+import { modifyShop } from "@/services/firestore";
 
 interface ShopManagerProps {
     CampaignID: string;

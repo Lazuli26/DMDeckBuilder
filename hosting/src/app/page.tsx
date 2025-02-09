@@ -4,7 +4,7 @@
 import { DMComponent } from "@/Components/DMComponent/DMComponent";
 import PlayerComponent from "@/Components/PlayerComponent/PlayerComponent";
 import { getCampaignList, getCampaignPlayers, subscribeToCampaign } from "@/services/firestore";
-import { Player } from "@/services/interfaces";
+import { PlayerCollection } from "@/services/interfaces";
 import { FormControl, InputLabel, Select, MenuItem, AppBar, Toolbar, Typography, IconButton, Box, CssBaseline, Tooltip } from "@mui/material";
 import HomeIcon from '@mui/icons-material/Home';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -17,6 +17,7 @@ import { ContextWrapper } from "@/Components/AppContext";
 import AuthWrapper, { AuthContext } from "@/Components/AuthWrapper/AuthWrapper";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CardViewerProvider } from "@/Components/CardViewer/CardViewer";
+import _ from "lodash";
 
 const theme = createTheme({
   palette: {
@@ -49,7 +50,7 @@ const theme = createTheme({
 export default function Home() {
   const [campaignList, setcampaignList] = useState<{ id: string, name: string }[]>([])
   const [selectedCampaign, selectCampaign] = useState(typeof window !== "undefined" ? localStorage.getItem("selectedCampaign") || "" : "");
-  const [playerList, setPlayerList] = useState<Player[]>([])
+  const [playerList, setPlayerList] = useState<PlayerCollection>({})
   const [selectedPlayer, selectPlayer] = useState<string | null>(typeof window !== "undefined" ? localStorage.getItem("selectedPlayer") : null);
 
   useEffect(() => {
@@ -153,7 +154,7 @@ export default function Home() {
                             label="Select a player"
                             onChange={e => selectPlayer(e.target.value)}
                           ><MenuItem value={"DM"}>DM</MenuItem>
-                            {playerList.map((v, i) => <MenuItem key={i} value={v.id}>{v.name}</MenuItem>)}
+                            {_.map(playerList, (v, i) => <MenuItem key={i} value={i}>{v.name}</MenuItem>)}
                           </Select>
                         </FormControl>}
                       {selectedPlayer == "DM" ? <DMComponent CampaignID={selectedCampaign} /> : selectedPlayer && <PlayerComponent CampaignID={selectedCampaign} PlayerID={selectedPlayer} />}

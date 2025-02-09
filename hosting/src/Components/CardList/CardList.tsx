@@ -4,7 +4,7 @@ import { List, ListItem, ListItemText, Box, IconButton, FormControl, InputLabel,
 import { Visibility, Edit, Delete, Close, Remove, Add, SwapHoriz } from "@mui/icons-material";
 import { modifyPlayerCards, setCardShowcase, addCardUsage } from "@/services/firestore";
 import { PlayingCard, Pack, Player } from "@/services/interfaces";
-import CardEditor from "../DMComponent/CardEditor";
+import CardEditor from "../DMComponent/CardCatalog/CardEditor";
 import { rarities, basePlayingCard } from "@/services/constants";
 import { AppContext } from "../AppContext";
 import { isObject } from "lodash";
@@ -13,7 +13,7 @@ import { useCardViewer } from "../CardViewer/CardViewer";
 
 interface CardListProps {
     campaignID: string;
-    dataSource: string[] | { [key: string]: string } | Pack | Player;
+    dataSource: string[] | { [key: string]: string } | Pack | (Player & { id: string });
     packEditControls?: { toggleCard: (cardId: string) => void, changeWeight: (cardId: string, weight: number | null) => void };
     isDM?: boolean;
     enableSorting?: boolean;
@@ -254,7 +254,7 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
             <List>
                 {paginatedCardItems.map(([card, item], index) => {
                     return (
-                        <ListItem key={card!.id + index} style={{ marginBottom: 3,  borderWidth: "1vh", borderColor: rarities[card!.rarity].color }}>
+                        <ListItem key={card!.id + index} style={{ marginBottom: 3, borderWidth: "1vh", borderColor: rarities[card!.rarity].color }}>
                             <ListItemText
                                 primary={
                                     packEditControls ? (
@@ -271,14 +271,15 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
                                 }
                                 secondary={
                                     <>
-                                        {item && item.playerInfo && (<>{isDM && (
-                                            <IconButton onClick={() => handleAddCardUsage((dataSource as Player).id, item.playerInfo!.inventoryKey, -1)}>
-                                                <Remove />
-                                            </IconButton>
-                                        )}
+                                        {item && item.playerInfo && (<>
+                                            {isDM && "id" in dataSource && (
+                                                <IconButton onClick={() => handleAddCardUsage(dataSource.id, item.playerInfo!.inventoryKey, -1)}>
+                                                    <Remove />
+                                                </IconButton>
+                                            )}
                                             {getCardUsageText(card!, item.playerInfo.timesUsed)}
-                                            {isDM && (
-                                                <IconButton onClick={() => handleAddCardUsage((dataSource as Player).id, item.playerInfo!.inventoryKey, 1)}>
+                                            {isDM && "id" in dataSource && (
+                                                <IconButton onClick={() => handleAddCardUsage(dataSource.id, item.playerInfo!.inventoryKey, 1)}>
                                                     <Add />
                                                 </IconButton>
                                             )}
@@ -295,7 +296,7 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
                                         <Edit />
                                     </IconButton>
                                     {item && item.playerInfo && 'id' in dataSource && (
-                                        <IconButton onClick={() => handleRemoveCardFromPlayer((dataSource as Player).id, item.playerInfo!.inventoryKey)}>
+                                        <IconButton onClick={() => handleRemoveCardFromPlayer(dataSource.id, item.playerInfo!.inventoryKey)}>
                                             <Delete />
                                         </IconButton>
                                     )}
@@ -334,7 +335,7 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
                                 alt={card!.name}
                                 sx={{
                                     width: 50,
-                                    height: 50,
+                                    aspectRatio: "1/1",
                                     objectFit: "cover",
                                     marginLeft: 2,
                                     borderRadius: 1,

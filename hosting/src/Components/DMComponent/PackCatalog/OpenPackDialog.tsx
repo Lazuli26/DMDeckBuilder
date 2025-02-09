@@ -1,16 +1,17 @@
 "use client"
 
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, List, ListItem, ListItemText, FormControl, InputLabel, Select, MenuItem, Box, Typography, IconButton } from "@mui/material";
-import { Pack, PlayingCard, Player } from "../../services/interfaces";
+import { Pack, PlayingCard, PlayerCollection } from "../../../services/interfaces";
 import { PersonAdd } from "@mui/icons-material";
 import { useState } from "react";
 import { rarities } from "@/services/constants";
-import { useCardViewer } from "../CardViewer/CardViewer";
+import { useCardViewer } from "../../CardViewer/CardViewer";
+import _ from "lodash";
 
 interface OpenPackDialogProps {
     open: boolean;
     pack: { pack: Pack, pickedCards: PlayingCard[] } | null;
-    players: Player[];
+    players: PlayerCollection;
     onClose: () => void;
     onAddCardToPlayer: (playerId: string, cardId: string, index: number) => void;
     onShowcaseOpenedPack: () => void;
@@ -49,8 +50,8 @@ const OpenPackDialog: React.FC<OpenPackDialogProps> = ({
                                         }}
                                         label="Assign to Player"
                                     >
-                                        {players.map(player => (
-                                            <MenuItem key={player.id} value={player.id}>{player.name}</MenuItem>
+                                        {_.map(players, (player, id) => (
+                                            <MenuItem key={id} value={id}>{player.name}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>

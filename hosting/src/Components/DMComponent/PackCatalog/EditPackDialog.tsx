@@ -1,8 +1,8 @@
 "use client"
 
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Tabs, Tab, Box, Typography } from "@mui/material";
-import { Pack, PlayingCard } from "../../services/interfaces";
-import CardList from "../CardList/CardList";
+import { Pack, PlayingCard } from "../../../services/interfaces";
+import CardList from "../../CardList/CardList";
 
 interface EditPackDialogProps {
     campaignID: string;

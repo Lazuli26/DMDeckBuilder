@@ -9,14 +9,14 @@ import "./style.css";
 import _ from "lodash";
 
 const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ CampaignID, PlayerID }) => {
-    const players = useAppSelector(state => state.campaign.value?.players || []);
+    const players = useAppSelector(state => state.campaign.value?.players || {});
     const cards = useAppSelector(state => state.campaign.value?.cards || []);
     const packs = useAppSelector(state => state.campaign.value?.packs || []);
     const shop = useAppSelector(state => state.campaign.value?.shop || {});
     const [viewPack, setViewPack] = useState<Pack | null>(null);
     const [tabIndex, setTabIndex] = useState(0);
 
-    const currentPlayer = players.find(p => p.id === PlayerID);
+    const currentPlayer = players[PlayerID];
 
     return (
         <>
@@ -51,12 +51,12 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
                             <Typography variant="h6">Balance: {currentPlayer?.balance}</Typography>
                             <CardList
                                 campaignID={CampaignID}
-                                dataSource={currentPlayer || []}
+                                dataSource={{...currentPlayer, id: PlayerID}}
                                 enableSorting />
                             <Typography variant="h6">Other Players Inventories</Typography>
                             <List>
-                                {players.filter(p => p.id !== PlayerID).map((p) => (
-                                    <Accordion key={p.id}>
+                                {_.map(_.entries(players).sort(), ([k,p]) => k !== PlayerID && (
+                                    <Accordion key={k}>
                                         <AccordionSummary expandIcon={<ExpandMore />}>
                                             <Typography>{p.name}</Typography>
                                         </AccordionSummary>
@@ -64,7 +64,7 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
                                             <Typography variant="h6">Balance: {p.balance}</Typography>
                                             <CardList
                                                 campaignID={CampaignID}
-                                                dataSource={p}
+                                                dataSource={{...p, id: PlayerID}}
                                                 enableSorting />
                                         </AccordionDetails>
                                     </Accordion>

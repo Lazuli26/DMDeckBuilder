@@ -5,7 +5,7 @@ import { generateUUID } from "@/services/utils";
 import { upsertCard, removeCard } from "@/services/firestore";
 import store from "@/store";
 import { Add as AddIcon, Close as CloseIcon } from "@mui/icons-material";
-import { AppContext } from "../AppContext";
+import { AppContext } from "../../AppContext";
 
 interface CardEditorProps {
     open: boolean;

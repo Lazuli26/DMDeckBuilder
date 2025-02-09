@@ -3,17 +3,17 @@
 import { useState, useEffect } from "react";
 import { useAppSelector } from "@/store/reduxHooks";
 import { List, ListItem, ListItemText, Card, CardContent, Typography, IconButton, CardHeader, Tooltip } from "@mui/material";
-import { upsertPack, modifyPlayerCards, setCardShowcase } from "../../services/firestore";
-import { Pack, PlayingCard } from "../../services/interfaces";
+import { upsertPack, modifyPlayerCards, setCardShowcase } from "../../../services/firestore";
+import { Pack, PlayingCard } from "../../../services/interfaces";
 import { Edit, OpenInNew, Visibility, Add } from "@mui/icons-material";
-import { generateUUID, generatePackContents } from "../../services/utils";
-import EditPackDialog from "./EditPackDialog";
+import { generateUUID, generatePackContents } from "../../../services/utils";
+import EditPackDialog from "../PackCatalog/EditPackDialog";
 import OpenPackDialog from "./OpenPackDialog";
 
 const PackManager: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
     const packs = useAppSelector(state => state.campaign.value?.packs || []);
     const cards = useAppSelector(state => state.campaign.value?.cards || []);
-    const players = useAppSelector(state => state.campaign.value?.players || []);
+    const players = useAppSelector(state => state.campaign.value?.players || {});
     const [editPack, setEditPack] = useState<Pack | null>(null);
     const [tabIndex, setTabIndex] = useState(0);
     const [nameFilter, setNameFilter] = useState("");

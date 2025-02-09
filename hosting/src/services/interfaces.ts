@@ -1,8 +1,8 @@
 export interface Player {
-    id: string;
     name: string;
     balance: number;
     Cards: { [key: string]: { cardId: string, timesUsed: number } };
+    userId?: string;
 }
 
 export interface PlayingCard {
@@ -27,14 +27,6 @@ export interface Pack {
     cardPool: { cardId: string; weight?: number }[];
 }
 export type ShopItem = { cardId: string; price: number };
-export interface Campaign {
-    name: string;
-    players: Player[];
-    cards: PlayingCard[];
-    packs: Pack[];
-    shop?: {[key: string]: ShopItem};
-    cardShowcase?: string[]; // If not empty, a dialog will open with the cards in this array for all players and the DM
-}
 
 export interface Rarity {
     name: string;
@@ -42,3 +34,21 @@ export interface Rarity {
     background: string;
 };
 
+export type PlayerCollection = {[key: string]: Player}
+
+export interface Campaign {
+    name: string;
+    players: PlayerCollection;
+    users?: string[];
+    cards: PlayingCard[];
+    packs: Pack[];
+    shop?: { [key: string]: ShopItem };
+    cardShowcase?: string[]; // If not empty, a dialog will open with the cards in this array for all players and the DM
+    owner?: string[];
+    requests?: { [playerId: string]: { type: 'store/card' | 'store/pack', resourceId: string }[] }
+}
+
+export interface AppUser {
+    lastLogin: string,
+    displayName: string
+}
