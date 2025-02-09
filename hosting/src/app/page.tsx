@@ -5,8 +5,9 @@ import { DMComponent } from "@/Components/DMComponent/DMComponent";
 import PlayerComponent from "@/Components/PlayerComponent/PlayerComponent";
 import { getCampaignList, getCampaignPlayers, subscribeToCampaign } from "@/services/firestore";
 import { Player } from "@/services/interfaces";
-import { FormControl, InputLabel, Select, MenuItem, AppBar, Toolbar, Typography, IconButton, Box, Paper, Button, CssBaseline } from "@mui/material";
+import { FormControl, InputLabel, Select, MenuItem, AppBar, Toolbar, Typography, IconButton, Box, CssBaseline, Tooltip } from "@mui/material";
 import HomeIcon from '@mui/icons-material/Home';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useState, useEffect } from "react";
 import { Provider } from 'react-redux';
 import { setCampaign } from '@/store/campaignSlice';
@@ -15,21 +16,22 @@ import React from "react";
 import { ContextWrapper } from "@/Components/AppContext";
 import AuthWrapper, { AuthContext } from "@/Components/AuthWrapper/AuthWrapper";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { CardViewerProvider } from "@/Components/CardViewer/CardViewer";
 
 const theme = createTheme({
   palette: {
-    mode: 'light', // You can change this to 'dark' for dark mode
+    mode: 'dark', // You can change this to 'dark' for dark mode
     primary: {
-      main: '#1976d2', // Primary color
+      main: '#a6a6a6', // Primary color
     },
     secondary: {
-      main: '#dc004e', // Secondary color
+      main: '#cc0000', // Secondary color
     },
     error: {
-      main: '#f44336', // Error color
-    }, 
+      main: '#cc00cc', // Error color
+    },
     background: {
-      default: '#f5f5f5', // Background color
+      default: '#383838', // Background color
     },
   },
   typography: {
@@ -100,56 +102,63 @@ export default function Home() {
       <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
         <AuthWrapper>
           <AuthContext.Consumer children={(context) => {
-            const { user, logout } = context || {};
+            const { logout } = context || {};
             return <>
-              <AppBar position="static" sx={{ background: "rgb(73, 33, 19)" }}>
+              <AppBar position="static" enableColorOnDark color="primary">
                 <Toolbar>
-                  <IconButton edge="start" color="inherit" aria-label="home" onClick={clearSelection}>
-                    <HomeIcon />
-                  </IconButton>
-                  
+                  <Tooltip title="Home">
+                    <IconButton edge="start" color="inherit" aria-label="home" onClick={clearSelection}>
+                      <HomeIcon />
+                    </IconButton>
+                  </Tooltip>
+
                   <Typography variant="h6" sx={{ flexGrow: 1, textAlign: 'center' }}>
-                    Dungeon Master Deck Builder<br/>
-                    {user?.displayName}
+                    {campaignList.find(v => v.id == selectedCampaign)?.name || "Dungeon Master Deck Builder"}
                   </Typography>
-                  {logout && <Button color="error" variant="contained"  onClick={logout}>Logout</Button>}
+                  {logout && <Tooltip title="Logout">
+                    <IconButton color="inherit" aria-label="logout" onClick={logout}>
+                      <LogoutIcon />
+                    </IconButton>
+                  </Tooltip>}
                 </Toolbar>
               </AppBar>
               <Provider store={store}>
                 <ContextWrapper>
-                  <Paper sx={{ width: "100%", background: "rgb(166, 166, 166)", overflow: "auto", height: "100%", maxHeight: "100%", padding: "1rem" }}>
-                    {!selectedPlayer &&
-                      <FormControl fullWidth>
-                        <InputLabel id="campaign-selector-label">Select a campaign</InputLabel>
-                        <Select
-                          labelId="campaign-selector-label"
-                          id="campaign-selector"
-                          value={selectedCampaign}
-                          label="Select a campaign"
-                          onChange={e => {
-                            selectCampaign(e.target.value);
-                            selectPlayer(null);
-                          }}
-                        >
-                          {campaignList.map((v, i) => <MenuItem key={i} value={v.id}>{v.name}</MenuItem>)}
-                        </Select>
-                      </FormControl>
-                    }
-                    {selectedCampaign && !selectedPlayer &&
-                      <FormControl fullWidth>
-                        <InputLabel id="player-selector-label">Select a player</InputLabel>
-                        <Select
-                          labelId="player-selector-label"
-                          id="player-selector"
-                          value={selectedPlayer || ""}
-                          label="Select a player"
-                          onChange={e => selectPlayer(e.target.value)}
-                        ><MenuItem value={"DM"}>DM</MenuItem>
-                          {playerList.map((v, i) => <MenuItem key={i} value={v.id}>{v.name}</MenuItem>)}
-                        </Select>
-                      </FormControl>}
-                    {selectedPlayer == "DM" ? <DMComponent CampaignID={selectedCampaign} /> : selectedPlayer && <PlayerComponent CampaignID={selectedCampaign} PlayerID={selectedPlayer} />}
-                  </Paper>
+                  <CardViewerProvider CampaignID={selectedCampaign}>
+                    <Box sx={{ width: "100%", overflow: "auto", height: "100%", maxHeight: "100%", padding: "1rem" }}>
+                      {!selectedPlayer &&
+                        <FormControl fullWidth>
+                          <InputLabel id="campaign-selector-label">Select a campaign</InputLabel>
+                          <Select
+                            labelId="campaign-selector-label"
+                            id="campaign-selector"
+                            value={selectedCampaign}
+                            label="Select a campaign"
+                            onChange={e => {
+                              selectCampaign(e.target.value);
+                              selectPlayer(null);
+                            }}
+                          >
+                            {campaignList.map((v, i) => <MenuItem key={i} value={v.id}>{v.name}</MenuItem>)}
+                          </Select>
+                        </FormControl>
+                      }
+                      {selectedCampaign && !selectedPlayer &&
+                        <FormControl fullWidth>
+                          <InputLabel id="player-selector-label">Select a player</InputLabel>
+                          <Select
+                            labelId="player-selector-label"
+                            id="player-selector"
+                            value={selectedPlayer || ""}
+                            label="Select a player"
+                            onChange={e => selectPlayer(e.target.value)}
+                          ><MenuItem value={"DM"}>DM</MenuItem>
+                            {playerList.map((v, i) => <MenuItem key={i} value={v.id}>{v.name}</MenuItem>)}
+                          </Select>
+                        </FormControl>}
+                      {selectedPlayer == "DM" ? <DMComponent CampaignID={selectedCampaign} /> : selectedPlayer && <PlayerComponent CampaignID={selectedCampaign} PlayerID={selectedPlayer} />}
+                    </Box>
+                  </CardViewerProvider>
                 </ContextWrapper>
               </Provider>
             </>

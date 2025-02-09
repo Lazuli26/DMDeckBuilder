@@ -1,9 +1,7 @@
 "use client"
 
-import { useState } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Tabs, Tab, Box, Typography } from "@mui/material";
 import { Pack, PlayingCard } from "../../services/interfaces";
-import PlayCard from "../PlayCard/PlayCard";
 import CardList from "../CardList/CardList";
 
 interface EditPackDialogProps {
@@ -37,7 +35,6 @@ const EditPackDialog: React.FC<EditPackDialogProps> = ({
     onToggleCardInPack,
     onWeightChange,
     onTabChange}) => {
-    const [viewCard, setViewCard] = useState<string | null>(null);
 
 
     return (
@@ -106,11 +103,6 @@ const EditPackDialog: React.FC<EditPackDialogProps> = ({
                 <Button onClick={onClose}>Cancel</Button>
                 <Button onClick={() => pack && onSave(pack)} variant="contained">Save</Button>
             </DialogActions>
-            {viewCard && (
-                <Dialog PaperProps={{ style: { backgroundColor: 'transparent', boxShadow: 'none' } }} open={!!viewCard} onClose={() => setViewCard(null)}>
-                    <PlayCard CampaignID={campaignID} CardID={viewCard} />
-                </Dialog>
-            )}
         </Dialog>
     );
 };

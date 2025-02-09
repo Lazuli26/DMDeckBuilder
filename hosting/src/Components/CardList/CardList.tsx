@@ -1,15 +1,15 @@
 import { useEffect, useState, useContext } from "react";
 import { useAppSelector } from "@/store/reduxHooks";
-import { List, ListItem, ListItemText, Box, IconButton, Dialog, FormControl, InputLabel, Select, MenuItem, TextField, Checkbox, Button, Grid2, Pagination } from "@mui/material";
+import { List, ListItem, ListItemText, Box, IconButton, FormControl, InputLabel, Select, MenuItem, TextField, Checkbox, Button, Grid2, Pagination } from "@mui/material";
 import { Visibility, Edit, Delete, Close, Remove, Add, SwapHoriz } from "@mui/icons-material";
 import { modifyPlayerCards, setCardShowcase, addCardUsage } from "@/services/firestore";
 import { PlayingCard, Pack, Player } from "@/services/interfaces";
-import PlayCard from "../PlayCard/PlayCard";
 import CardEditor from "../DMComponent/CardEditor";
 import { rarities, basePlayingCard } from "@/services/constants";
 import { AppContext } from "../AppContext";
 import { isObject } from "lodash";
 import _ from "lodash";
+import { useCardViewer } from "../CardViewer/CardViewer";
 
 interface CardListProps {
     campaignID: string;
@@ -22,7 +22,7 @@ interface CardListProps {
 }
 
 type CardListItem = {
-    cardId?: string;
+    cardId: string;
     packInfo?: Omit<Pack["cardPool"][0], "cardId">;
     playerInfo?: Omit<Player["Cards"][string], "cardId"> & { inventoryKey: string };
     originalKey: number | string;
@@ -84,7 +84,6 @@ const getCardUsageText = (card: PlayingCard, timesUsed: number) => {
 const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = false, packEditControls, enableSorting = false, enableFiltering = false, customControls }) => {
     const cardCatalog = useAppSelector(state => state.campaign.value?.cards || []).map(card => ({ ...basePlayingCard, ...card }));
     const [cardListData, setCardListData] = useState<CardListItem[]>([]);
-    const [viewCard, setViewCard] = useState<string | null>(null);
     const [cardEditorId, setCardEditorId] = useState<string | null>(null);
     const [sortOption, setSortOption] = useState<string>("name");
     const [rarityFilter, setRarityFilter] = useState<number | null>(null);
@@ -95,6 +94,8 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
     const { types: uniqueTypes, tags: uniqueTags } = useContext(AppContext);
     const [page, setPage] = useState<number>(1);
     const cardsPerPage = 10;
+
+    const setCardView = useCardViewer()
 
     useEffect(() => {
         const cardListData: CardListItem[] = [];
@@ -253,7 +254,7 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
             <List>
                 {paginatedCardItems.map(([card, item], index) => {
                     return (
-                        <ListItem key={card!.id + index} style={{ marginBottom: 3, background: "whitesmoke", borderWidth: "1vh", borderColor: rarities[card!.rarity].color }}>
+                        <ListItem key={card!.id + index} style={{ marginBottom: 3,  borderWidth: "1vh", borderColor: rarities[card!.rarity].color }}>
                             <ListItemText
                                 primary={
                                     packEditControls ? (
@@ -339,7 +340,7 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
                                     borderRadius: 1,
                                     cursor: 'pointer'
                                 }}
-                                onClick={() => setViewCard(card!.id)}
+                                onClick={() => setCardView.setCardToShow(card!.id)}
                             />
                         </ListItem>
                     );
@@ -359,11 +360,6 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
                     />
                 </Box>
             })()}
-            {viewCard && (
-                <Dialog open={!!viewCard} onClose={() => setViewCard(null)} PaperProps={{ style: { backgroundColor: 'transparent', boxShadow: 'none' } }}>
-                    <PlayCard CampaignID={campaignID} CardID={viewCard} />
-                </Dialog>
-            )}
             {cardEditorId !== null && (
                 <CardEditor
                     open={!!cardEditorId}

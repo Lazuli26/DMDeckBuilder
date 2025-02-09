@@ -1,8 +1,7 @@
 "use client"
 
 import { useState } from "react";
-import { Dialog, Tabs, Tab, Box, useMediaQuery, useTheme, Grid2 } from "@mui/material";
-import PlayCard from "../PlayCard/PlayCard";
+import { Tabs, Tab, Box, useMediaQuery, useTheme, Grid2 } from "@mui/material";
 import CardManagement from "./CardManagement";
 import PlayerManagement from "./PlayerManagement";
 import PackManager from "./PackManager";
@@ -10,7 +9,6 @@ import ShopManager from "./ShopManager";
 import CardShowCase from "../CardShowCase/CardShowCase";
 
 export const DMComponent: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
-    const [viewCard, setViewCard] = useState("");
     const [tabIndex, setTabIndex] = useState(0);
     const theme = useTheme();
     const isLandscape = useMediaQuery(theme.breakpoints.up('md'));
@@ -21,9 +19,6 @@ export const DMComponent: React.FC<{ CampaignID: string }> = ({ CampaignID }) =>
 
     return (
         <>
-            <Dialog open={viewCard != ""} onClose={() => setViewCard("")}>
-                <PlayCard CampaignID={CampaignID} CardID={viewCard} />
-            </Dialog>
             <CardShowCase CampaignID={CampaignID} isDM={true} />
             {isLandscape ? (
                 <Grid2 container spacing={2} display="flex" width="100%" height="100%">

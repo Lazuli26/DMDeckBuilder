@@ -5,7 +5,6 @@ import { Accordion, AccordionDetails, AccordionSummary, Card, CardContent, CardH
 import { useState } from "react";
 import CardList from "../CardList/CardList";
 import CardShowCase from "../CardShowCase/CardShowCase";
-import PlayCard from "../PlayCard/PlayCard";
 import "./style.css";
 import _ from "lodash";
 
@@ -14,7 +13,6 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
     const cards = useAppSelector(state => state.campaign.value?.cards || []);
     const packs = useAppSelector(state => state.campaign.value?.packs || []);
     const shop = useAppSelector(state => state.campaign.value?.shop || {});
-    const [viewCard, setViewCard] = useState<{ cardId: string, timesUsed: number } | null>(null);
     const [viewPack, setViewPack] = useState<Pack | null>(null);
     const [tabIndex, setTabIndex] = useState(0);
 
@@ -22,9 +20,6 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
 
     return (
         <>
-            {!!viewCard && <Dialog open={!!viewCard} onClose={() => setViewCard(null)} PaperProps={{ style: { backgroundColor: 'transparent', boxShadow: 'none' } }}>
-                <PlayCard CampaignID={CampaignID} CardID={viewCard.cardId} timesUsed={viewCard.timesUsed} />
-            </Dialog>}
             {!!viewPack && <Dialog open={!!viewPack} onClose={() => setViewPack(null)} maxWidth="sm" fullWidth>
                 <Card>
                     <CardHeader title={viewPack.name} subheader={<>
@@ -48,7 +43,6 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
                     <Tabs value={tabIndex} onChange={(e, newValue) => setTabIndex(newValue)} variant="scrollable" scrollButtons="auto">
                         <Tab label="Inventory" />
                         <Tab label="Card Catalog" />
-                        <Tab label="Pack Catalog" />
                         <Tab label="Shop" />
                     </Tabs>
                     {tabIndex === 0 && (
@@ -87,35 +81,37 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
                         />
                     )}
                     {tabIndex === 2 && (
-                        <Grid2 container>
-                            {packs.map((pack, i) => (
-                                <Grid2 key={pack.id + i} size={{ xs: 12, sm: 6, md: 4 }}>
-                                    <Card key={pack.id} sx={{ aspectRatio: "5 / 8", width: "auto", margin: 2, backgroundImage: `url(${pack.background})`, backgroundSize: 'cover', backgroundPosition: 'center', cursor: 'pointer' }} onClick={() => setViewPack(pack)}>
-                                        <CardHeader
-                                            title={pack.name}
-                                            subheader={<>Cost: {pack.price}</>}
-                                            sx={{
-                                                backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                                                '& .MuiCardHeader-title, & .MuiCardHeader-subheader': {
-                                                    fontWeight: 'bold'
-                                                }
-                                            }}
-                                        />
-                                    </Card>
-                                </Grid2>
-                            ))}
-                        </Grid2>
-                    )}
-                    {tabIndex === 3 && (
-                        <CardList
-                            campaignID={CampaignID}
-                            dataSource={_.reduce(Object.keys(shop), (prev, key) => ({...prev, [key]: shop[key].cardId}), {})}
-                            customControls={(item) => (
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Typography variant="body1">Price: {shop[item.originalKey as string]?.price}</Typography>
-                                </Box>
-                            )}
-                        />
+                        <>
+                            <Typography variant="h6">Shop - Cards</Typography>
+                            <CardList
+                                campaignID={CampaignID}
+                                dataSource={_.reduce(Object.keys(shop), (prev, key) => ({...prev, [key]: shop[key].cardId}), {})}
+                                customControls={(item) => (
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Typography variant="body1">Price: {shop[item.originalKey as string]?.price}</Typography>
+                                    </Box>
+                                )}
+                            />
+                            <Typography variant="h6" sx={{ marginTop: 2 }}>Shop - Packs</Typography>
+                            <Grid2 container>
+                                {packs.map((pack, i) => (
+                                    <Grid2 key={pack.id + i} size={{ xs: 12, sm: 6, md: 4 }}>
+                                        <Card key={pack.id} sx={{ aspectRatio: "5 / 8", width: "auto", margin: 2, backgroundImage: `url(${pack.background})`, backgroundSize: 'cover', backgroundPosition: 'center', cursor: 'pointer' }} onClick={() => setViewPack(pack)}>
+                                            <CardHeader
+                                                title={pack.name}
+                                                subheader={<>Cost: {pack.price}</>}
+                                                sx={{
+                                                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                                    '& .MuiCardHeader-title, & .MuiCardHeader-subheader': {
+                                                        fontWeight: 'bold'
+                                                    }
+                                                }}
+                                            />
+                                        </Card>
+                                    </Grid2>
+                                ))}
+                            </Grid2>
+                        </>
                     )}
                 </CardContent>
             </Card>

@@ -11,23 +11,21 @@
   /* Portrait Mode: Use 75vw */
   @media (orientation: portrait) {
     .Card {
-      width: 75vw;
-      height: auto;
+      width: 80vw;
     }
   }
   
   /* Landscape Mode: Use 75vh */
   @media (orientation: landscape) {
     .Card {
-      height: 75vh;
-      width: auto;
+      height: 85vh;
     }
   }
 
   @keyframes rotateLoop {
-    0% { transform: rotateZ(-0.5deg); }
-    50% { transform: rotateZ(0.5deg); }
-    100% { transform: rotateZ(-0.5deg); }
+    0% { transform: rotateZ(-1deg); }
+    50% { transform: rotateZ(1deg); }
+    100% { transform: rotateZ(-1deg); }
   }
 
   .animated-card {

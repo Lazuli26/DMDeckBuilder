@@ -5,6 +5,7 @@ import { Pack, PlayingCard, Player } from "../../services/interfaces";
 import { PersonAdd } from "@mui/icons-material";
 import { useState } from "react";
 import { rarities } from "@/services/constants";
+import { useCardViewer } from "../CardViewer/CardViewer";
 
 interface OpenPackDialogProps {
     open: boolean;
@@ -13,7 +14,6 @@ interface OpenPackDialogProps {
     onClose: () => void;
     onAddCardToPlayer: (playerId: string, cardId: string, index: number) => void;
     onShowcaseOpenedPack: () => void;
-    onViewCard: (cardId: string) => void;
 }
 
 const OpenPackDialog: React.FC<OpenPackDialogProps> = ({
@@ -22,11 +22,10 @@ const OpenPackDialog: React.FC<OpenPackDialogProps> = ({
     players,
     onClose,
     onAddCardToPlayer,
-    onShowcaseOpenedPack,
-    onViewCard
+    onShowcaseOpenedPack
 }) => {
     const [selectedCard, setSelectedCard] = useState<string | null>(null);
-
+    const onViewCard = useCardViewer().setCardToShow;
     return (
         <Dialog open={open} onClose={onClose}>
             <DialogTitle>Opened Pack</DialogTitle>

@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useAppSelector } from "@/store/reduxHooks";
-import { List, ListItem, ListItemText, Card, CardContent, Typography, IconButton, Button, Dialog } from "@mui/material";
+import { List, ListItem, ListItemText, Card, CardContent, Typography, IconButton, CardHeader, Tooltip } from "@mui/material";
 import { upsertPack, modifyPlayerCards, setCardShowcase } from "../../services/firestore";
 import { Pack, PlayingCard } from "../../services/interfaces";
-import { Edit, OpenInNew, Visibility } from "@mui/icons-material";
-import PlayCard from "../PlayCard/PlayCard";
+import { Edit, OpenInNew, Visibility, Add } from "@mui/icons-material";
 import { generateUUID, generatePackContents } from "../../services/utils";
 import EditPackDialog from "./EditPackDialog";
 import OpenPackDialog from "./OpenPackDialog";
@@ -17,7 +16,6 @@ const PackManager: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
     const players = useAppSelector(state => state.campaign.value?.players || []);
     const [editPack, setEditPack] = useState<Pack | null>(null);
     const [tabIndex, setTabIndex] = useState(0);
-    const [viewCard, setViewCard] = useState<string | null>(null);
     const [nameFilter, setNameFilter] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("");
     const [rarityFilter, setRarityFilter] = useState<number | null>(null);
@@ -130,22 +128,36 @@ const PackManager: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
 
     return (
         <Card>
+            <CardHeader 
+                title={<Typography variant="h5">Pack Manager</Typography>} 
+                action={
+                    <Tooltip title="Create New Pack">
+                        <IconButton color="primary" onClick={handleCreateNewPack}>
+                            <Add />
+                        </IconButton>
+                    </Tooltip>
+                }
+            />
             <CardContent>
-                <Typography variant="h5">Pack Manager</Typography>
-                <Button variant="contained" onClick={handleCreateNewPack}>Create New Pack</Button>
                 <List>
                     {packs.map(pack => (
                         <ListItem key={pack.id}>
                             <ListItemText primary={pack.name} secondary={`Price: ${pack.price}`} />
-                            <IconButton onClick={() => setEditPack(pack)}>
-                                <Edit />
-                            </IconButton>
-                            <IconButton onClick={() => handleOpenPack(pack)}>
-                                <OpenInNew />
-                            </IconButton>
-                            <IconButton onClick={() => handleShowcasePack(pack)}>
-                                <Visibility />
-                            </IconButton>
+                            <Tooltip title="Edit Pack">
+                                <IconButton onClick={() => setEditPack(pack)}>
+                                    <Edit />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Open Pack">
+                                <IconButton onClick={() => handleOpenPack(pack)}>
+                                    <OpenInNew />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Showcase Pack">
+                                <IconButton onClick={() => handleShowcasePack(pack)}>
+                                    <Visibility />
+                                </IconButton>
+                            </Tooltip>
                         </ListItem>
                     ))}
                 </List>
@@ -169,11 +181,6 @@ const PackManager: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
                     onRarityFilterChange={setRarityFilter}
                 />
                 }
-                {viewCard && (
-                    <Dialog PaperProps={{ style: { backgroundColor: 'transparent', boxShadow: 'none' } }} open={!!viewCard} onClose={() => setViewCard(null)}>
-                        <PlayCard CampaignID={CampaignID} CardID={viewCard} />
-                    </Dialog>
-                )}
                 <OpenPackDialog
                     open={!!openedPackCards}
                     pack={openedPackCards}
@@ -181,7 +188,6 @@ const PackManager: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
                     onClose={() => setOpenedPackCards(null)}
                     onAddCardToPlayer={handleAddCardToPlayer}
                     onShowcaseOpenedPack={handleShowcaseOpenedPack}
-                    onViewCard={setViewCard}
                 />
             </CardContent>
         </Card>

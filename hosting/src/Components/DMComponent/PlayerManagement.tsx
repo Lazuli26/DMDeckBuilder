@@ -1,11 +1,10 @@
 import { upsertPlayer, modifyPlayerCards } from "@/services/firestore";
-import { Player, PlayingCard } from "@/services/interfaces";
-import { Button, Card, CardContent, CardHeader, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemText, TextField, Autocomplete, Box, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { Player } from "@/services/interfaces";
+import { Button, Card, CardContent, CardHeader, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemText, TextField, Box, FormControl, InputLabel, Select, MenuItem, IconButton } from "@mui/material";
 import { useState } from "react";
 import { ExpandMore, Add, Remove, Shuffle } from '@mui/icons-material';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import { rarities } from "@/services/constants";
-import PlayCard from "../PlayCard/PlayCard";
 import CardList from "../CardList/CardList";
 import { useAppSelector } from "@/store/reduxHooks";
 
@@ -20,9 +19,7 @@ const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
     const playerList = useAppSelector(state => state.campaign.value?.players || []);
     const cards = useAppSelector(state => state.campaign.value?.cards || []);
     const [newPlayer, setNewPlayer] = useState<Player | null>(null);
-    const [selectedCards, setSelectedCards] = useState<PlayingCard[]>([]);
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-    const [viewCard, setViewCard] = useState<{ cardId: string, timesUsed: number } | null>(null);
     const [rarityFilter, setRarityFilter] = useState<number | null>(null);
 
     const playerSubmitError = {
@@ -53,18 +50,10 @@ const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
         return filteredCards[0];
     };
 
-    const addCardToInventory = async (card: PlayingCard) => {
+    const addCardToInventory = async (cardID: string) => {
         if (selectedPlayer) {
-            await modifyPlayerCards(CampaignID, selectedPlayer.id, "add", card.id);
+            await modifyPlayerCards(CampaignID, selectedPlayer.id, "add", cardID);
         }
-    };
-
-    const addCardToVisible = (card: PlayingCard) => {
-        setSelectedCards(prev => [...prev, card]);
-    };
-
-    const clearVisibleCards = () => {
-        setSelectedCards([]);
     };
 
     return (
@@ -87,10 +76,7 @@ const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
                                 />
                             </AccordionSummary>
                             <AccordionDetails>
-                                <Button onClick={() => {
-                                    setSelectedPlayer(val);
-                                    setSelectedCards([]);
-                                }}>Add Card</Button>
+                                <Button variant="contained" onClick={() => setSelectedPlayer(val)}>Add Card</Button>
                                 <CardList
                                     campaignID={CampaignID}
                                     dataSource={val}
@@ -164,48 +150,32 @@ const PlayerManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
                                     ))}
                                 </Select>
                             </FormControl>
-                            <Autocomplete
-                                options={getFilteredCards()}
-                                getOptionLabel={(option) => option.name}
-                                onChange={(event, value) => value && addCardToVisible(value)}
-                                renderInput={(params) => <TextField {...params} label="Card Name" variant="outlined" />}
+                            <CardList
+                                campaignID={CampaignID}
+                                dataSource={getFilteredCards().map(card => card.id)}
+                                enableFiltering
+                                enableSorting
+                                customControls={(item) => (
+                                    <IconButton
+                                        onClick={() => addCardToInventory(item.cardId)}
+                                    >
+                                        <Add />
+                                    </IconButton>
+                                )}
                             />
                             <Box display="flex" justifyContent="space-between" mt={2}>
                                 <Button
                                     variant="contained"
                                     startIcon={<Shuffle />}
-                                    onClick={() => addCardToVisible(getRandomCard())}
+                                    onClick={() => addCardToInventory(getRandomCard().id)}
                                 >
                                     Random
                                 </Button>
-                                <Button
-                                    variant="contained"
-                                    onClick={clearVisibleCards}
-                                >
-                                    Clear
-                                </Button>
                             </Box>
-                            {selectedCards.map((card, index) => (
-                                <Box key={index} mt={2}>
-                                    <PlayCard CampaignID={CampaignID} CardID={card.id} />
-                                    <Button
-                                        variant="contained"
-                                        fullWidth
-                                        onClick={() => addCardToInventory(card)}
-                                    >
-                                        Add to Inventory
-                                    </Button>
-                                </Box>
-                            ))}
                         </DialogContent>
                         <DialogActions>
                             <Button onClick={() => setSelectedPlayer(null)}>Close</Button>
                         </DialogActions>
-                    </Dialog>
-                )}
-                {viewCard && (
-                    <Dialog open={!!viewCard} onClose={() => setViewCard(null)} PaperProps={{ style: { backgroundColor: 'transparent', boxShadow: 'none' } }}>
-                        <PlayCard CampaignID={CampaignID} CardID={viewCard.cardId} timesUsed={viewCard.timesUsed} />
                     </Dialog>
                 )}
             </CardContent>

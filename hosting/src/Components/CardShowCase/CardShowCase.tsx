@@ -35,7 +35,7 @@ const CardShowCase: React.FC<{ CampaignID: string, isDM: boolean }> = ({ Campaig
     const currentCard = cards.find(card => card.id === cardShowcase[currentIndex]);
 
     return (
-        <Dialog open={cardShowcase.length > 0} onClose={handleClose} PaperProps={{ style: { backgroundColor: 'transparent', boxShadow: 'none' } }}>
+        <Dialog open={cardShowcase.length > 0} onClose={handleClose} slotProps={{paper: { style: { backgroundColor: 'transparent', boxShadow: 'none' } }}}>
             <DialogContent>
                 {currentCard && (
                     <PlayCard CampaignID={CampaignID} CardID={currentCard.id} />

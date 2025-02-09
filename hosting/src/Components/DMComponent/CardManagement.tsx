@@ -1,9 +1,11 @@
 import { PlayingCard } from "@/services/interfaces";
-import { Button, Card, CardContent, CardHeader } from "@mui/material";
+import { IconButton, Card, CardContent, CardHeader, Tooltip } from "@mui/material";
 import { useState } from "react";
 import CardList from "../CardList/CardList";
 import CardEditor from "./CardEditor";
 import { useAppSelector } from "@/store/reduxHooks";
+import BackupIcon from '@mui/icons-material/Backup';
+import AddIcon from '@mui/icons-material/Add';
 
 export const basePlayingCard: PlayingCard = {
     id: "",
@@ -17,7 +19,7 @@ export const basePlayingCard: PlayingCard = {
 };
 
 const CardManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
-    const cards= useAppSelector(state => state.campaign.value?.cards || []).map(val => ({ ...basePlayingCard, ...val }));
+    const cards = useAppSelector(state => state.campaign.value?.cards || []).map(val => ({ ...basePlayingCard, ...val }));
     const campaignName = useAppSelector(state => state.campaign.value?.name) || "";
     const [cardEditorId, setCardEditorId] = useState<string | null>(null);
 
@@ -37,10 +39,24 @@ const CardManagement: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
 
     return (
         <Card>
-            <CardHeader title="Card List" />
+            <CardHeader 
+                title="Card List" 
+                action={
+                    <>
+                        <Tooltip title="Backup Cards">
+                            <IconButton color="primary" onClick={backupCards}>
+                                <BackupIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Create New Card">
+                            <IconButton color="primary" onClick={() => setCardEditorId("")} sx={{ marginLeft: 2 }}>
+                                <AddIcon />
+                            </IconButton>
+                        </Tooltip>
+                    </>
+                } 
+            />
             <CardContent sx={{ overflow: "auto" }}>
-                <Button variant="contained" onClick={backupCards}>Backup Cards</Button>
-                <Button variant="contained" onClick={() => setCardEditorId("")} sx={{ marginLeft: 2 }}>Create New Card</Button>
                 <CardList campaignID={CampaignID} enableSorting enableFiltering dataSource={cards.map(card => card.id)} isDM={true} />
             </CardContent>
             {cardEditorId != null && (
