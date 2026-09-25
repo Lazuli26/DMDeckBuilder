@@ -17,14 +17,15 @@ const formatCampaign = (Campaign: Campaign, ID: string) => {
     return Campaign
 }
 
-export async function createCampaign(name: string): Promise<string> {
-    const campaignRef = await addDoc(collection(db, "campaigns"), {
-        name,
+export async function createCampaign(payload: Partial<Campaign>): Promise<string> {
+    const docData: Partial<Campaign> = {
+        name: payload.name || "New Campaign",
         players: {},
         cards: [],
         packs: [],
-        characters: {}
-    } as Campaign);
+        ...payload
+    };
+    const campaignRef = await addDoc(collection(db, "campaigns"), docData as Campaign);
     return campaignRef.id;
 }
 

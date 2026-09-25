@@ -1,6 +1,6 @@
 import React, { useEffect, useState, createContext, useContext } from "react";
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, User } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Button, Box, Typography } from "@mui/material";
 import { app, db } from "@/services/firebase";
 import { AppUser } from "@/services/interfaces";
@@ -8,6 +8,7 @@ import { AppUser } from "@/services/interfaces";
 export interface AuthContextProps {
     user: User | null;
     logout: () => Promise<void>;
+    profile: AppUser;
 }
 
 export const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -24,16 +25,25 @@ const AuthWrapper: React.FC<React.PropsWithChildren<object>> = ({ children }) =>
     const [user, setUser] = useState<User | null>(null);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
-
+    const [userProfile, setProfile] = useState<AppUser>({} as AppUser);
     // Monitor authentication state changes
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
                 setUser(user);
                 // Update last login time
+                console.log("Fetching user profile for:", user.uid);
+                let userData: AppUser | undefined;
+                await getDoc(doc(db, "users", user.uid)).then(docSnap => {
+                    if (docSnap.exists()) {
+                        userData = docSnap.data() as AppUser;
+                        setProfile(userData);
+                    }
+                });
                 await setDoc(doc(db, "users", user.uid), {
                     lastLogin: new Date().toISOString(),
                     displayName: user.displayName,
+                    admin: userData?.admin || false
                 } as AppUser, { merge: true });
             } else {
                 setUser(null);
@@ -62,9 +72,9 @@ const AuthWrapper: React.FC<React.PropsWithChildren<object>> = ({ children }) =>
     };
 
     // If user is authenticated, provide context and show children components
-    if (user) {
+    if (user && userProfile) {
         return (
-            <AuthContext.Provider value={{ user, logout: handleLogout }}>
+            <AuthContext.Provider value={{ user, logout: handleLogout, profile: userProfile }}>
                 <Box>
                     {/*<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2 }}>
                         <Typography variant="h6">Welcome, {user.displayName}</Typography>

@@ -45,10 +45,12 @@ export interface Campaign {
     shop?: { [key: string]: ShopItem };
     cardShowcase?: string[]; // If not empty, a dialog will open with the cards in this array for all players and the DM
     owner?: string[];
-    requests?: { [playerId: string]: { type: 'store/card' | 'store/pack', resourceId: string }[] }
+    requests?: { [playerId: string]: { type: 'store/card' | 'store/pack', resourceId: string }[] };
+    coverImage?: string;
 }
 
 export interface AppUser {
     lastLogin: string,
-    displayName: string
+    displayName: string,
+    admin?: boolean,
 }

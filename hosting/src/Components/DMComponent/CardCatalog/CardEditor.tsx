@@ -159,10 +159,11 @@ const CardEditor: React.FC<CardEditorProps> = ({ open, cardId, campaignID, onClo
                     error={submitError.description}
                     id="description"
                     multiline
+                    rows={4}
                     label="Description"
                     variant="outlined"
                     value={cardEditor?.description || ""}
-                    onChange={(e) => setCardEditor(d => ({ ...d!, description: e.target.value || "" }))}
+                    onChange={(e) => setCardEditor(d => ({ ...d!, description: e.target.value.replace(/\r?\n/g, '\n') }))}
                 />
                 <Autocomplete
                     freeSolo

@@ -19,6 +19,7 @@ interface CardListProps {
     enableSorting?: boolean;
     enableFiltering?: boolean;
     customControls?: (item: CardListItem) => React.ReactNode;
+    customCardSource?: PlayingCard[];
 }
 
 type CardListItem = {
@@ -81,8 +82,9 @@ const getCardUsageText = (card: PlayingCard, timesUsed: number) => {
     return card.usage === -1 ? `Times Used: ${timesUsed} / ∞` : `Times Used: ${timesUsed} / ${card.usage}`;
 };
 
-const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = false, packEditControls, enableSorting = false, enableFiltering = false, customControls }) => {
-    const cardCatalog = useAppSelector(state => state.campaign.value?.cards || []).map(card => ({ ...basePlayingCard, ...card }));
+const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = false, packEditControls, enableSorting = false, enableFiltering = false, customControls, customCardSource }) => {
+    const campaignCards = useAppSelector(state => state.campaign.value?.cards || []);
+    const cardCatalog: PlayingCard[] = (customCardSource ?? campaignCards).map((card: PlayingCard) => ({ ...basePlayingCard, ...card }));
     const [cardListData, setCardListData] = useState<CardListItem[]>([]);
     const [cardEditorId, setCardEditorId] = useState<string | null>(null);
     const [sortOption, setSortOption] = useState<string>("name");
@@ -144,7 +146,7 @@ const CardList: React.FC<CardListProps> = ({ campaignID, dataSource, isDM = fals
     }
     else {
         for (const cardListItem of cardListData) {
-            const item = cardCatalog.find(item => item.id === cardListItem.cardId);
+            const item = cardCatalog.find((item: PlayingCard) => item.id === cardListItem.cardId);
             if (item) {
                 carListRender.push([item, cardListItem])
             }

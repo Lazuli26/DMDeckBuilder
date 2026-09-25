@@ -4,8 +4,11 @@
 import { DMComponent } from "@/Components/DMComponent/DMComponent";
 import PlayerComponent from "@/Components/PlayerComponent/PlayerComponent";
 import { getCampaignList, getCampaignPlayers, subscribeToCampaign } from "@/services/firestore";
+import { createCampaign } from "@/services/firestore/campaign";
+import { TextField, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Campaign } from "@/services/interfaces";
 import { PlayerCollection } from "@/services/interfaces";
-import { FormControl, InputLabel, Select, MenuItem, AppBar, Toolbar, Typography, IconButton, Box, CssBaseline, Tooltip } from "@mui/material";
+import { FormControl, InputLabel, Select, MenuItem, AppBar, Toolbar, Typography, IconButton, Box, CssBaseline, Tooltip, Button } from "@mui/material";
 import HomeIcon from '@mui/icons-material/Home';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useState, useEffect } from "react";
@@ -14,7 +17,7 @@ import { setCampaign } from '@/store/campaignSlice';
 import store from "@/store";
 import React from "react";
 import { ContextWrapper } from "@/Components/AppContext";
-import AuthWrapper, { AuthContext } from "@/Components/AuthWrapper/AuthWrapper";
+import AuthWrapper, { AuthContext, AuthContextProps } from "@/Components/AuthWrapper/AuthWrapper";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CardViewerProvider } from "@/Components/CardViewer/CardViewer";
 import _ from "lodash";
@@ -53,11 +56,34 @@ export default function Home() {
   const [playerList, setPlayerList] = useState<PlayerCollection>({})
   const [selectedPlayer, selectPlayer] = useState<string | null>(typeof window !== "undefined" ? localStorage.getItem("selectedPlayer") : null);
 
+  // State for creating a new campaign
+  const [campaignDraft, setCampaignDraft] = useState<Partial<Campaign> | null>(null);
+
   useEffect(() => {
     getCampaignList().then(data => {
       setcampaignList(data)
     })
   }, []);
+
+  const openCreateDialog = () => setCampaignDraft({ name: "", coverImage: "" });
+  const closeCreateDialog = () => setCampaignDraft(null);
+
+  const handleCreateCampaign = async (auth: AuthContextProps) => {
+    if (!campaignDraft?.name) return;
+    const uid = auth?.user?.uid;
+    const payload: Partial<Campaign> = {
+      ...campaignDraft,
+      owner: uid ? [uid] : undefined,
+    };
+    console.log("Creating campaign with payload:", payload);
+    const id = await createCampaign(payload);
+    // Refresh campaign list and select the new campaign
+    const list = await getCampaignList();
+    setcampaignList(list);
+    selectCampaign(id);
+    // Clear draft which will close dialog
+    setCampaignDraft(null);
+  };
 
   useEffect(() => {
     if (selectedCampaign != "") {
@@ -104,6 +130,7 @@ export default function Home() {
         <AuthWrapper>
           <AuthContext.Consumer children={(context) => {
             const { logout } = context || {};
+            console.log("Auth context:", context);
             return <>
               <AppBar position="static" enableColorOnDark color="primary">
                 <Toolbar>
@@ -141,6 +168,11 @@ export default function Home() {
                             }}
                           >
                             {campaignList.map((v, i) => <MenuItem key={i} value={v.id}>{v.name}</MenuItem>)}
+                            {context?.profile?.admin && (
+                              <MenuItem value="__create_new__" onClick={() => openCreateDialog()}>
+                                Create new campaign
+                              </MenuItem>
+                            )}
                           </Select>
                         </FormControl>
                       }
@@ -153,12 +185,36 @@ export default function Home() {
                             value={selectedPlayer || ""}
                             label="Select a player"
                             onChange={e => selectPlayer(e.target.value)}
-                          ><MenuItem value={"DM"}>DM</MenuItem>
+                          >{context?.profile.admin && <MenuItem value={"DM"}>DM</MenuItem>}
                             {_.map(playerList, (v, i) => <MenuItem key={i} value={i}>{v.name}</MenuItem>)}
                           </Select>
                         </FormControl>}
                       {selectedPlayer == "DM" ? <DMComponent CampaignID={selectedCampaign} /> : selectedPlayer && <PlayerComponent CampaignID={selectedCampaign} PlayerID={selectedPlayer} />}
                     </Box>
+                    <Dialog open={campaignDraft != null} onClose={closeCreateDialog}>
+                      <DialogTitle>Create new campaign</DialogTitle>
+                      <DialogContent>
+                        <TextField
+                          autoFocus
+                          margin="dense"
+                          label="Campaign Name"
+                          fullWidth
+                          value={campaignDraft?.name || ""}
+                          onChange={e => setCampaignDraft(d => ({ ...(d || {}), name: e.target.value }))}
+                        />
+                        <TextField
+                          margin="dense"
+                          label="Cover Image URL"
+                          fullWidth
+                          value={campaignDraft?.coverImage || ""}
+                          onChange={e => setCampaignDraft(d => ({ ...(d || {}), coverImage: e.target.value }))}
+                        />
+                      </DialogContent>
+                      <DialogActions>
+                        <Button onClick={closeCreateDialog}>Cancel</Button>
+                        {context && <Button onClick={() => handleCreateCampaign(context)} variant="contained">Create</Button>}
+                      </DialogActions>
+                    </Dialog>
                   </CardViewerProvider>
                 </ContextWrapper>
               </Provider>

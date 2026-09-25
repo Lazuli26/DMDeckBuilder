@@ -93,9 +93,19 @@ const PlayCard: React.FC<{ CampaignID: string, CardID: string, timesUsed?: numbe
                     minHeight: '4rem', // Set a maximum height for the content
                     maxHeight: '200px' // Set a maximum height for the content
                 }}>
-                    <Typography variant="body1" color="textPrimary" style={responsiveTextStyle}>
+                    <Typography 
+                        variant="body1" 
+                        color="textPrimary" 
+                        style={responsiveTextStyle}
+                        component="div" // Use div to allow HTML rendering
+                    >
                         {CardInfo?.type}<br />
-                        {CardInfo?.description}
+                        {CardInfo?.description?.split('\n').map((line, index) => (
+                            <React.Fragment key={index}>
+                                {line}
+                                <br />
+                            </React.Fragment>
+                        ))}
                     </Typography>
                 </CardContent>
                 <Box display="flex" justifyContent="space-between" padding="16px" style={{

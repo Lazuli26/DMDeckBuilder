@@ -58,12 +58,22 @@ const PackManager: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
         setEditPack(null);
     };
 
-    const handleToggleCardInPack = (cardId: string) => {
-        console.log("toggle card", cardId);
+    const handleToggleCardInPack = (payload: string | string[]) => {
+        console.log("toggle card", payload);
+        if (typeof payload === "string") {
+            payload = [payload];
+        }
         if (editPack) {
-            const contents = editPack.cardPool.some(content => content.cardId === cardId)
-                ? editPack.cardPool.filter(content => content.cardId !== cardId)
-                : [...editPack.cardPool, { cardId }];
+            let contents = [...editPack.cardPool];
+            payload.forEach(id => {
+                console.log("toggle card", id);
+                if (contents.some(content => content.cardId === id)) {
+                    contents = contents.filter(content => content.cardId !== id);
+                }
+                else {
+                    contents.push({ cardId: id, weight: cards.find(card => card.id === id)?.rarity || 1 });
+                }
+            });
             setEditPack({ ...editPack, cardPool: contents });
         }
     };
@@ -128,8 +138,8 @@ const PackManager: React.FC<{ CampaignID: string }> = ({ CampaignID }) => {
 
     return (
         <Card>
-            <CardHeader 
-                title={<Typography variant="h5">Pack Manager</Typography>} 
+            <CardHeader
+                title={<Typography variant="h5">Pack Manager</Typography>}
                 action={
                     <Tooltip title="Create New Pack">
                         <IconButton color="primary" onClick={handleCreateNewPack}>
