@@ -93,12 +93,12 @@ export default function Home() {
       if (typeof window !== "undefined") {
         localStorage.setItem("selectedCampaign", selectedCampaign);
       }
-      // Fetch and set the campaign data
-      subscribeToCampaign(selectedCampaign, campaign => {
+      const unsub = subscribeToCampaign(selectedCampaign, campaign => {
         if (campaign) {
           store.dispatch(setCampaign(campaign));
         }
       });
+      return () => unsub();
     }
   }, [selectedCampaign]);
 

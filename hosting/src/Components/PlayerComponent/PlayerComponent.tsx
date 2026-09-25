@@ -64,7 +64,7 @@ const PlayerComponent: React.FC<{ CampaignID: string, PlayerID: string }> = ({ C
                                             <Typography variant="h6">Balance: {p.balance}</Typography>
                                             <CardList
                                                 campaignID={CampaignID}
-                                                dataSource={{...p, id: PlayerID}}
+                                                dataSource={{...p, id: k}}
                                                 enableSorting />
                                         </AccordionDetails>
                                     </Accordion>
